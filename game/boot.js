@@ -5,7 +5,7 @@
         box2d:false,
         chipmunk:false,
         showFPS:true,
-        frameRate:60,
+        frameRate:30,
         loadExtension:false,
         renderMode:0,
         tag:'gameCanvas',

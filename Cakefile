@@ -5,6 +5,7 @@ util          = require 'util'
 
 files = [
     'src/resources.coffee'
+    'src/map.coffee'
     'src/game.coffee'
 ]
 
