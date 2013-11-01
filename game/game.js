@@ -17,8 +17,6 @@ g_resources = [
   }
 ];
 
-console.log("wat");
-
 CircleSprite = cc.Sprite.extend({
   _degree: 0,
   ctor: function() {
@@ -47,7 +45,7 @@ Helloworld = cc.Layer.extend({
     selfPointer = this;
     this._super();
     size = cc.Director.getInstance().getWinSize();
-    this.helloLabel = cc.LabelTTF.create("Hello World", "Arial", 38);
+    this.helloLabel = cc.LabelTTF.create("Down", "Arial", 38);
     this.helloLabel.setPosition(cc.p(size.width / 2, 0));
     this.addChild(this.helloLabel, 5);
     lazyLayer = cc.Layer.create();
@@ -58,12 +56,8 @@ Helloworld = cc.Layer.extend({
     this.sprite.setRotation(180);
     lazyLayer.addChild(this.sprite, 0);
     rotateToA = cc.RotateTo.create(2, 0);
-    scaleToA = cc.ScaleTo.create(2, 1, 1);
+    scaleToA = cc.ScaleTo.create(1, 1, 1);
     this.sprite.runAction(cc.Sequence.create(rotateToA, scaleToA));
-    this.circle = new CircleSprite();
-    this.circle.setPosition(cc.p(40, size.height - 60));
-    this.addChild(this.circle, 2);
-    this.circle.schedule(this.circle.myUpdate, 1 / 60);
     this.helloLabel.runAction(cc.Spawn.create(cc.MoveBy.create(2.5, cc.p(0, size.height - 40)), cc.TintTo.create(2.5, 255, 125, 0)));
     this.setTouchEnabled(true);
     return true;
@@ -93,6 +87,4 @@ HelloWorldScene = cc.Scene.extend({
   }
 });
 
-/*
-//@ sourceMappingURL=game.map
-*/
+//# sourceMappingURL=game.map
