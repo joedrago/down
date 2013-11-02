@@ -17,7 +17,7 @@ cocos2dApp = cc.Application.extend {
       # initialize director
       director = cc.Director.getInstance()
 
-      cc.EGLView.getInstance().setDesignResolutionSize(720, 1280, cc.RESOLUTION_POLICY.SHOW_ALL)
+      cc.EGLView.getInstance().setDesignResolutionSize(1280, 720, cc.RESOLUTION_POLICY.SHOW_ALL)
 
       # turn on display FPS
       director.setDisplayStats @config['showFPS']

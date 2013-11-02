@@ -1,5 +1,5 @@
 resources =
-  'HelloWorld': 'res/HelloWorld.png'
+  'splashscreen': 'res/splashscreen.png'
 
 cocosPreloadList = ({src: v} for k, v of resources)
 resources.cocosPreloadList = cocosPreloadList
