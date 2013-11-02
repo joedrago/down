@@ -1,0 +1,11 @@
+{
+  "name": "down",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "browserify": "*",
+    "coffeeify": "*",
+    "seed-random": "*",
+    "mold-source-map": "*"
+  }
+}

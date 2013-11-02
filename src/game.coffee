@@ -1,3 +1,5 @@
+{Map} = require 'map'
+
 GameWorld = cc.Layer.extend {
   isMouseDown: false
   helloImg: null
@@ -42,3 +44,6 @@ DownScene = cc.Scene.extend {
     layer.init()
     @addChild(layer)
 }
+
+module.exports =
+  DownScene: DownScene

@@ -11,3 +11,6 @@ class Map
   moveDelta: (dx, dy) ->
     pos = @sprite.getPosition()
     @sprite.setPosition cc.p(pos.x + dx, pos.y + dy)
+
+module.exports =
+  Map: Map

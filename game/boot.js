@@ -10,9 +10,7 @@
         renderMode:0,
         tag:'gameCanvas',
         SingleEngineFile:'Cocos2d-html5-v2.2.min.js',
-        appFiles:[
-            'game.js'
-        ]
+        appFiles:[]
     };
 
     if(!d.createElement('canvas').getContext){

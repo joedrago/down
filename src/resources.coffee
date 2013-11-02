@@ -1,9 +1,6 @@
-s_HelloWorld = 'res/HelloWorld.png'
-s_CloseNormal = 'res/CloseNormal.png'
-s_CloseSelected = 'res/CloseSelected.png'
+resources =
+  'HelloWorld': 'res/HelloWorld.png'
 
-g_resources = [
-    {src:s_HelloWorld}
-    {src:s_CloseNormal}
-    {src:s_CloseSelected}
-]
+cocosPreloadList = ({src: v} for k, v of resources)
+resources.cocosPreloadList = cocosPreloadList
+module.exports = resources

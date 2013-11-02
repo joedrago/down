@@ -4,7 +4,12 @@
 		{
 			"folder_exclude_patterns":
 			[
-				"wbin"
+				"wbin",
+				"node_modules"
+			],
+			"file_exclude_patterns":
+			[
+				"main.js"
 			],
 			"follow_symlinks": true,
 			"path": "."

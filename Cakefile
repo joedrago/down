@@ -1,47 +1,43 @@
-{spawn, exec} = require 'child_process'
-fs            = require 'fs'
-util          = require 'util'
+browserify = require 'browserify'
+fs         = require 'fs'
+util       = require 'util'
 
-
-files = [
-    'src/resources.coffee'
-    'src/map.coffee'
-    'src/game.coffee'
+modules = [
+  'resources'
+  'map'
+  'game'
+]
+apps = [
+  'main'
 ]
 
-cmdExt = ''
-pathSeparator = ':'
-dirSeparator = '/'
-
-# This is really stupid
-if process.platform == 'win32'
-  cmdExt = '.cmd'
-  pathSeparator = ';'
-  dirSeparator = '\\'
-
-# This also sucks
-process.env["PATH"] = process.env["PATH"] + pathSeparator + __dirname + dirSeparator + 'node_modules' + dirSeparator + '.bin'
+srcDir = 'src/'
+srcDirFromGameDir = '../' + srcDir
+gameDir = 'game/'
+bundleFile = gameDir + 'main.js'
 
 task 'build', 'build game', (options) ->
-  appContents = new Array remaining = files.length
-  for file, index in files then do (file, index) ->
-    fs.readFile file, 'utf8', (err, fileContents) ->
-      throw err if err
-      appContents[index] = fileContents
-      process() if --remaining is 0
-  process = ->
-    fs.writeFileSync 'game/game.coffee', appContents.join('\n\n'), 'utf8', (err) ->
-      throw err if err
-
-  coffee = spawn 'coffee' + cmdExt, ['-mcb', 'game.coffee'], { cwd: 'game' }
-  coffee.stdout.on 'data', (data) -> console.log data.toString().trim()
-  coffee.stderr.on 'data', (data) -> console.log data.toString().trim()
+  b = browserify {
+    basedir: gameDir
+    extensions: ['coffee']
+  }
+  b.transform 'coffeeify'
+  for module in modules
+    b.require(srcDirFromGameDir + module + '.coffee', { expose: module })
+  for app in apps
+    b.add srcDirFromGameDir + app + '.coffee'
+  b.bundle({ debug: true })
+    .pipe(require('mold-source-map').transformSourcesRelativeTo(gameDir))
+    .pipe(fs.createWriteStream(bundleFile))
+    .on 'finish', ->
+      console.log "wrote #{bundleFile}"
 
 task 'watch', 'Watch prod source files and build changes', ->
   invoke 'build'
   util.log "Watching for changes in src"
 
-  for file in files then do (file) ->
+  for name in modules.concat(apps) then do (name) ->
+    file = srcDir + name + '.coffee'
     fs.watchFile file, (curr, prev) ->
       if +curr.mtime isnt +prev.mtime
         util.log "File changed: #{file}, building..."
