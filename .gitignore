@@ -1,2 +1,6 @@
 /node_modules
 *.sublime-workspace
+/phone/cocos2d-x
+/phone/tools/android
+/phone/tools/ant
+/phone/project.android/local.properties
