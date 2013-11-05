@@ -1,5 +1,7 @@
+config = require 'config'
+
 cocos2dApp = cc.Application.extend {
-  config: document['ccConfig']
+  config: config
   ctor: (scene) ->
     @_super()
     @startScene = scene

@@ -1,20 +1,41 @@
+# -------------------------------------------------------------------------------
+# Game Sources
+
+# Assumed to be in src/XXXXX.coffee, this is also the require() string
+modules = [
+  'boot/mainweb'
+  'boot/maindroid'
+
+  'world/map'
+
+  'config'
+  'resources'
+  'game'
+]
+
+# Things listed in here will be auto-executed at the end of the bundle
+apps = [
+  'boot/boot'
+]
+
+# -------------------------------------------------------------------------------
+# List of things that might need to be require()'d, but aren't in our sources
+
+externals = [
+  'jsb.js'
+]
+
+# -------------------------------------------------------------------------------
+# Build scripts
+
 browserify = require 'browserify'
 fs         = require 'fs'
 util       = require 'util'
 
-modules = [
-  'resources'
-  'map'
-  'game'
-]
-apps = [
-  'main'
-]
-
 srcDir = 'src/'
 srcDirFromGameDir = '../' + srcDir
 gameDir = 'game/'
-bundleFile = gameDir + 'main.js'
+bundleFile = gameDir + 'down.js'
 
 task 'build', 'build game', (options) ->
   b = browserify {
@@ -24,13 +45,18 @@ task 'build', 'build game', (options) ->
   b.transform 'coffeeify'
   for module in modules
     b.require(srcDirFromGameDir + module + '.coffee', { expose: module })
+  for ext in externals
+    b.external ext
   for app in apps
     b.add srcDirFromGameDir + app + '.coffee'
-  b.bundle({ debug: true })
-    .pipe(require('mold-source-map').transformSourcesRelativeTo(gameDir))
-    .pipe(fs.createWriteStream(bundleFile))
-    .on 'finish', ->
-      console.log "wrote #{bundleFile}"
+  bundlePipe = b.bundle({ debug: true })
+    .on 'error', (err) ->
+      console.log "Error #{err}"
+    bundlePipe
+      .pipe(require('mold-source-map').transformSourcesRelativeTo(gameDir))
+      .pipe(fs.createWriteStream(bundleFile))
+      .on 'finish', ->
+        console.log "wrote #{bundleFile}"
 
 task 'watch', 'Watch prod source files and build changes', ->
   invoke 'build'

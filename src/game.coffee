@@ -1,4 +1,4 @@
-{Map} = require 'map'
+{Map} = require 'world/map'
 
 GameWorld = cc.Layer.extend {
   isMouseDown: false
@@ -34,7 +34,7 @@ GameWorld = cc.Layer.extend {
     @isMouseDown = false
 
   onTouchesCancelled: (touches, event) ->
-    console.log("onTouchesCancelled")
+    # console.log("onTouchesCancelled")
 }
 
 DownScene = cc.Scene.extend {
