@@ -4,3 +4,8 @@
 /phone/tools/android
 /phone/tools/ant
 /phone/project.android/local.properties
+/phone/project.android/assets
+/phone/project.android/bin
+/phone/project.android/gen
+/phone/project.android/libs
+/phone/project.android/obj
