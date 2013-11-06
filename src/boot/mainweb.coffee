@@ -4,7 +4,6 @@ cocos2dApp = cc.Application.extend {
   config: config
   ctor: (scene) ->
     @_super()
-    @startScene = scene
     cc.COCOS2D_DEBUG = @config['COCOS2D_DEBUG']
     cc.initDebugSetting()
     cc.setup(@config['tag'])
@@ -30,11 +29,11 @@ cocos2dApp = cc.Application.extend {
       # load resources
       resources = require 'resources'
       cc.LoaderScene.preload(resources.cocosPreloadList, ->
-        director.replaceScene(new @startScene())
+        require 'game'
+        director.replaceScene(cc.game.scenes.intro)
       this)
 
       return true
 }
 
-game = require 'game'
-myApp = new cocos2dApp(game.DownScene)
+myApp = new cocos2dApp()

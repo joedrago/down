@@ -1,4 +1,4 @@
 require 'jsb.js'
+require 'game'
 
-game = require 'game'
-cc.Director.getInstance().runWithScene(new game.DownScene())
+cc.Director.getInstance().runWithScene(cc.game.scenes.intro)

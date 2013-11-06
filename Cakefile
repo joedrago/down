@@ -6,10 +6,12 @@ modules = [
   'boot/mainweb'
   'boot/maindroid'
 
-  'world/map'
+  'world/floor'
 
   'config'
   'resources'
+  'intro'
+  'gfx'
   'game'
 ]
 
