@@ -30,6 +30,9 @@ cocos2dApp = cc.Application.extend {
       resources = require 'resources'
       cc.LoaderScene.preload(resources.cocosPreloadList, ->
         require 'main'
+        nullScene = new cc.Scene();
+        nullScene.init()
+        cc.Director.getInstance().replaceScene(nullScene)
         cc.game.modes.intro.activate()
       this)
 

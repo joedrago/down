@@ -36,10 +36,15 @@ class Mode
   constructor: (@name) ->
     @scene = new ModeScene()
     @scene.init(this)
+    @scene.retain()
 
   activate: ->
     cc.log "activating mode #{@name}"
-    cc.Director.getInstance().replaceScene(@scene)
+    if cc.sawOneScene?
+      cc.Director.getInstance().popScene()
+    else
+      cc.sawOneScene = true
+    cc.Director.getInstance().pushScene(@scene)
 
   add: (obj) ->
     @scene.gfx.addChild(obj)

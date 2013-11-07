@@ -1,4 +1,7 @@
 require 'jsb.js'
 require 'main'
 
-cc.Director.getInstance().runWithScene(cc.game.scenes.intro)
+nullScene = new cc.Scene()
+nullScene.init()
+cc.Director.getInstance().runWithScene(nullScene)
+cc.game.modes.intro.activate()
