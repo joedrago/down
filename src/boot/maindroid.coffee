@@ -1,4 +1,4 @@
 require 'jsb.js'
-require 'game'
+require 'main'
 
 cc.Director.getInstance().runWithScene(cc.game.scenes.intro)

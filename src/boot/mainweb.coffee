@@ -29,8 +29,8 @@ cocos2dApp = cc.Application.extend {
       # load resources
       resources = require 'resources'
       cc.LoaderScene.preload(resources.cocosPreloadList, ->
-        require 'game'
-        director.replaceScene(cc.game.scenes.intro)
+        require 'main'
+        cc.game.modes.intro.activate()
       this)
 
       return true

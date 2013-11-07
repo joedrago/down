@@ -3,16 +3,20 @@
 
 # Assumed to be in src/XXXXX.coffee, this is also the require() string
 modules = [
+  'base/mode'
+
   'boot/mainweb'
   'boot/maindroid'
 
   'world/floor'
 
+  'mode/intro'
+  'mode/game'
+
   'config'
   'resources'
-  'intro'
   'gfx'
-  'game'
+  'main'
 ]
 
 # Things listed in here will be auto-executed at the end of the bundle
