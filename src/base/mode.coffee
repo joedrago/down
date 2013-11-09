@@ -49,6 +49,9 @@ class Mode
   add: (obj) ->
     @scene.gfx.addChild(obj)
 
+  remove: (obj) ->
+    @scene.gfx.removeChild(obj)
+
   # to be overridden by derived Modes
   onActivate: ->
   onClick: (x, y) ->

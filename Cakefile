@@ -8,7 +8,10 @@ modules = [
   'boot/mainweb'
   'boot/maindroid'
 
+  'gfx/tilesheet'
+
   'world/floor'
+  'world/floorgen'
 
   'mode/intro'
   'mode/game'
