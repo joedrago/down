@@ -3,6 +3,10 @@ resources = require 'resources'
 floorgen = require 'world/floorgen'
 Tilesheet = require 'gfx/tilesheet'
 
+UNIT_SIZE = 16
+SCALE_MIN = 2.0
+SCALE_MAX = 8.0
+
 class GameMode extends Mode
   constructor: ->
     super("Game")
@@ -18,7 +22,8 @@ class GameMode extends Mode
     if @gfx?
       if @gfx.floorLayer?
         @remove @gfx.floorLayer
-    @gfx = {}
+    @gfx =
+      unitSize: UNIT_SIZE
 
   gfxRenderFloor: ->
     @gfx.floorLayer = new cc.Layer()
@@ -26,24 +31,37 @@ class GameMode extends Mode
 
     tiles = new Tilesheet(resources.tiles0, 16, 16, 16)
     grid = cc.game.currentFloor().grid
-    firstWall = true
     for j in [0...grid.height]
       for i in [0...grid.width]
         v = grid.get(i, j)
         if v != 0
-          if firstWall
-            cc.log "first wall at #{i}, #{j}"
-            firstWall = false
           sprite = cc.Sprite.create tiles.resource
           sprite.setAnchorPoint(cc.p(0, 0))
           sprite.setTextureRect(tiles.rect(@tileForGridValue(v)))
-          sprite.setPosition(cc.p(i * 16, j * 16))
+          sprite.setPosition(cc.p(i * @gfx.unitSize, j * @gfx.unitSize))
           @gfx.floorLayer.addChild sprite, -1
 
-    center = grid.bbox.center()
-    @gfx.floorLayer.setPosition((cc.width / 2)+(-center.x * 16), (cc.height / 2)+(-center.y * 16))
-
+    @gfx.floorLayer.setScale(SCALE_MIN)
     @add @gfx.floorLayer
+    @gfxCenterMap()
+
+  gfxPlaceMap: (mapX, mapY, screenX, screenY) ->
+    scale = @gfx.floorLayer.getScale()
+    x = screenX - (mapX * scale)
+    y = screenY - (mapY * scale)
+    @gfx.floorLayer.setPosition(x, y)
+
+  gfxCenterMap: ->
+    center = cc.game.currentFloor().grid.bbox.center()
+    @gfxPlaceMap(center.x * @gfx.unitSize, center.y * @gfx.unitSize, cc.width / 2, cc.height / 2)
+
+  gfxScreenToMapCoords: (x, y) ->
+    pos = @gfx.floorLayer.getPosition()
+    scale = @gfx.floorLayer.getScale()
+    return {
+      x: (x - pos.x) / scale
+      y: (y - pos.y) / scale
+    }
 
   gfxRenderPlayer: ->
     @gfx.player = {}
@@ -55,8 +73,8 @@ class GameMode extends Mode
     @gfx.floorLayer.addChild s, 0
 
   gfxUpdatePositions: ->
-    x = cc.game.state.player.x * 16
-    y = cc.game.state.player.y * 16
+    x = cc.game.state.player.x * @gfx.unitSize
+    y = cc.game.state.player.y * @gfx.unitSize
     @gfx.player.sprite.setPosition(cc.p(x, y))
 
   update: (dt) ->
@@ -71,11 +89,30 @@ class GameMode extends Mode
     @gfxUpdatePositions()
     cc.Director.getInstance().getScheduler().scheduleCallbackForTarget(this, @update, 1.0, cc.REPEAT_FOREVER, 0, false)
 
+  gfxAdjustMapScale: (delta) ->
+    scale = @gfx.floorLayer.getScale()
+    scale += delta
+    scale = SCALE_MAX if scale > SCALE_MAX
+    scale = SCALE_MIN if scale < SCALE_MIN
+    @gfx.floorLayer.setScale(scale)
+
+  onDrag: (dx, dy) ->
+    pos = @gfx.floorLayer.getPosition()
+    @gfx.floorLayer.setPosition(pos.x + dx, pos.y + dy)
+
+  onZoom: (x, y, delta) ->
+    pos = @gfxScreenToMapCoords(x, y)
+    @gfxAdjustMapScale(delta / 200)
+    @gfxPlaceMap(pos.x, pos.y, x, y)
+
   onClick: (x, y) ->
-    floorPos = @gfx.floorLayer.getPosition()
-    gridX = Math.floor((x - floorPos.x) / 16)
-    gridY = Math.floor((y - floorPos.y) / 16)
-    cc.log "grid click #{gridX}, #{gridY}"
+    # @gfxAdjustMapScale 0.1
+    # @gfxPlaceMap(pos.x, pos.y, x, y)
+
+    pos = @gfxScreenToMapCoords(x, y)
+    gridX = Math.floor(pos.x / @gfx.unitSize)
+    gridY = Math.floor(pos.y / @gfx.unitSize)
+    # cc.log "grid click #{gridX}, #{gridY}"
     cc.game.state.player.x = gridX
     cc.game.state.player.y = gridY
     @gfxUpdatePositions()

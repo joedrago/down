@@ -1,7 +1,7 @@
 This directory should contain the following:
 
 * cocos2d-x: cocos2d-x git repo
-  * git clone https://github.com/joedrago/cocos2d-x.git
+  * git clone -b master https://github.com/joedrago/cocos2d-x.git
   * (inside dir) git submodule update --init
   * Not a submodule for down because it is unnecessary/heavy for web development
 
