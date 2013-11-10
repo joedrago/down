@@ -1,12 +1,9 @@
 Mode = require 'base/mode'
+config = require 'config'
 resources = require 'resources'
 floorgen = require 'world/floorgen'
 Pathfinder = require 'world/pathfinder'
 Tilesheet = require 'gfx/tilesheet'
-
-UNIT_SIZE = 16
-SCALE_MIN = 1.5
-SCALE_MAX = 8.0
 
 class GameMode extends Mode
   constructor: ->
@@ -24,7 +21,6 @@ class GameMode extends Mode
       if @gfx.floorLayer?
         @remove @gfx.floorLayer
     @gfx =
-      unitSize: UNIT_SIZE
       pathSprites: []
 
   gfxRenderFloor: ->
@@ -40,10 +36,11 @@ class GameMode extends Mode
           sprite = cc.Sprite.create tiles.resource
           sprite.setAnchorPoint(cc.p(0, 0))
           sprite.setTextureRect(tiles.rect(@tileForGridValue(v)))
-          sprite.setPosition(cc.p(i * @gfx.unitSize, j * @gfx.unitSize))
+          sprite.setPosition(cc.p(i * cc.unitSize, j * cc.unitSize))
           @gfx.floorLayer.addChild sprite, -1
 
-    @gfx.floorLayer.setScale(SCALE_MIN)
+    @gfx.floorLayer.setScale(config.scale.min)
+    @gfx.floorLayer.setScale(1.0)
     @add @gfx.floorLayer
     @gfxCenterMap()
 
@@ -55,7 +52,7 @@ class GameMode extends Mode
 
   gfxCenterMap: ->
     center = cc.game.currentFloor().bbox.center()
-    @gfxPlaceMap(center.x * @gfx.unitSize, center.y * @gfx.unitSize, cc.width / 2, cc.height / 2)
+    @gfxPlaceMap(center.x * cc.unitSize, center.y * cc.unitSize, cc.width / 2, cc.height / 2)
 
   gfxScreenToMapCoords: (x, y) ->
     pos = @gfx.floorLayer.getPosition()
@@ -67,35 +64,23 @@ class GameMode extends Mode
 
   gfxRenderPlayer: ->
     @gfx.player = {}
-    @gfx.player.tiles = new Tilesheet(resources.player, 12, 14, 18)
-    s = cc.Sprite.create @gfx.player.tiles.resource
-    s.setAnchorPoint(cc.p(0, 0))
-    s.setTextureRect(@gfx.player.tiles.rect(16))
-    @gfx.player.sprite = s
-    @gfx.floorLayer.addChild s, 0
+    @gfx.player.sprite = cc.game.state.player.createSprite()
+    @gfx.floorLayer.addChild @gfx.player.sprite, 0
 
-  gfxUpdatePositions: ->
-    x = cc.game.state.player.x * @gfx.unitSize
-    y = cc.game.state.player.y * @gfx.unitSize
-    @gfx.player.sprite.setPosition(cc.p(x, y))
-
-  update: (dt) ->
-    which = Math.floor(Math.random() * 5)
-    @gfx.player.sprite.setTextureRect(@gfx.player.tiles.rect(which))
-
-  onActivate: ->
-    cc.game.newGame()
-    @gfxClear()
-    @gfxRenderFloor()
-    @gfxRenderPlayer()
-    @gfxUpdatePositions()
-    cc.Director.getInstance().getScheduler().scheduleCallbackForTarget(this, @update, 1.0, cc.REPEAT_FOREVER, 0, false)
+  # gfxUpdatePositions: ->
+  #   player = cc.game.state.player
+  #   x = player.x * cc.unitSize
+  #   y = player.y * cc.unitSize
+  #   @gfx.player.sprite.setPosition(cc.p(x, y))
+  #   if player.prevAnimFrame != player.animFrame
+  #     @gfx.player.sprite.setTextureRect(@gfx.player.tiles.rect(player.animFrame))
+  #     player.prevAnimFrame = player.animFrame
 
   gfxAdjustMapScale: (delta) ->
     scale = @gfx.floorLayer.getScale()
     scale += delta
-    scale = SCALE_MAX if scale > SCALE_MAX
-    scale = SCALE_MIN if scale < SCALE_MIN
+    scale = config.scale.max if scale > config.scale.max
+    scale = config.scale.min if scale < config.scale.min
     @gfx.floorLayer.setScale(scale)
 
   gfxRenderPath: (path) ->
@@ -107,7 +92,7 @@ class GameMode extends Mode
       sprite = cc.Sprite.create tiles.resource
       sprite.setAnchorPoint(cc.p(0, 0))
       sprite.setTextureRect(tiles.rect(17))
-      sprite.setPosition(cc.p(p.x * @gfx.unitSize, p.y * @gfx.unitSize))
+      sprite.setPosition(cc.p(p.x * cc.unitSize, p.y * cc.unitSize))
       sprite.setOpacity 128
       @gfx.floorLayer.addChild sprite
       @gfx.pathSprites.push sprite
@@ -121,20 +106,25 @@ class GameMode extends Mode
     @gfxAdjustMapScale(delta / 200)
     @gfxPlaceMap(pos.x, pos.y, x, y)
 
+  onActivate: ->
+    cc.game.newGame()
+    @gfxClear()
+    @gfxRenderFloor()
+    @gfxRenderPlayer()
+    cc.Director.getInstance().getScheduler().scheduleCallbackForTarget(this, @update, 1 / 60.0, cc.REPEAT_FOREVER, 0, false)
+
   onClick: (x, y) ->
-    # @gfxAdjustMapScale 0.1
-    # @gfxPlaceMap(pos.x, pos.y, x, y)
-
     pos = @gfxScreenToMapCoords(x, y)
-    gridX = Math.floor(pos.x / @gfx.unitSize)
-    gridY = Math.floor(pos.y / @gfx.unitSize)
+    gridX = Math.floor(pos.x / cc.unitSize)
+    gridY = Math.floor(pos.y / cc.unitSize)
 
-    pathfinder = new Pathfinder(cc.game.state.player.x, cc.game.state.player.y, gridX, gridY, 0)
-    path = pathfinder.calc()
-    @gfxRenderPath(path)
+    cc.game.state.player.act(gridX, gridY)
 
-    # cc.game.state.player.x = gridX
-    # cc.game.state.player.y = gridY
-    # @gfxUpdatePositions()
+    # pathfinder = new Pathfinder(cc.game.currentFloor(), 0)
+    # path = pathfinder.calc(cc.game.state.player.x, cc.game.state.player.y, gridX, gridY)
+    # @gfxRenderPath(path)
+
+  update: (dt) ->
+    cc.game.state.player.think(dt, @gfx.player.sprite)
 
 module.exports = GameMode

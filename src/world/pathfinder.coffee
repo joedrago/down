@@ -194,22 +194,6 @@ class AStar
     x = node.x
     y = node.y
 
-    # West
-    if grid[x-1] and grid[x-1][y]
-      ret.push(grid[x-1][y])
-
-    # East
-    if grid[x+1] and grid[x+1][y]
-      ret.push(grid[x+1][y])
-
-    # South
-    if grid[x] and grid[x][y-1]
-      ret.push(grid[x][y-1])
-
-    # North
-    if grid[x] and grid[x][y+1]
-      ret.push(grid[x][y+1])
-
     # Southwest
     if grid[x-1] and grid[x-1][y-1]
       ret.push(grid[x-1][y-1])
@@ -226,14 +210,29 @@ class AStar
     if grid[x+1] and grid[x+1][y+1]
       ret.push(grid[x+1][y+1])
 
+    # West
+    if grid[x-1] and grid[x-1][y]
+      ret.push(grid[x-1][y])
+
+    # East
+    if grid[x+1] and grid[x+1][y]
+      ret.push(grid[x+1][y])
+
+    # South
+    if grid[x] and grid[x][y-1]
+      ret.push(grid[x][y-1])
+
+    # North
+    if grid[x] and grid[x][y+1]
+      ret.push(grid[x][y+1])
+
     return ret
 
 class Pathfinder
-  constructor: (@startX, @startY, @destX, @destY, @flags) ->
-    @floor = cc.game.currentFloor()
+  constructor: (@floor, @flags) ->
 
-  calc: ->
+  calc: (startX, startY, destX, destY) ->
     astar = new AStar @floor
-    return astar.search(@floor.grid[@startX][@startY], @floor.grid[@destX][@destY])
+    return astar.search(@floor.grid[startX][startY], @floor.grid[destX][destY])
 
 module.exports = Pathfinder

@@ -8,6 +8,9 @@ modules = [
   'boot/mainweb'
   'boot/maindroid'
 
+  'brain/brain'
+  'brain/player'
+
   'gfx/tilesheet'
 
   'world/floor'
