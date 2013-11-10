@@ -1,9 +1,6 @@
 fs = require 'fs'
 seedRandom = require 'seed-random'
 
-TYPE = (obj) ->
-  Object.prototype.toString.call(obj).slice(8, -1)
-
 SHAPES = [
   """
   ############
@@ -101,7 +98,12 @@ class Rect
 
 class RoomTemplate
   constructor: (@width, @height, @roomid) ->
-    @grid = new Buffer(@width * @height)
+    @grid = []
+    for i in [0...@width]
+      @grid[i] = []
+      for j in [0...@height]
+        @grid[i][j] = EMPTY
+
     @generateShape()
 
   generateShape: ->
@@ -119,25 +121,25 @@ class RoomTemplate
     return new Rect x, y, x + @width, y + @height
 
   set: (i, j, v) ->
-    @grid[i + (j * @width)] = v
+    @grid[i][j] = v
 
   get: (map, x, y, i, j) ->
     if i >= 0 and i < @width and j >= 0 and j < @height
-      v = @grid[i + (j * @width)]
+      v = @grid[i][j]
       return v if v != EMPTY
     return map.get x + i, y + j
 
   place: (map, x, y) ->
     for i in [0...@width]
       for j in [0...@height]
-        v = @grid[i + (j * @width)]
-        map.grid[x + i + ((y + j) * map.width)] = v if v != EMPTY
+        v = @grid[i][j]
+        map.set(x + i, y + j, v) if v != EMPTY
 
   fits: (map, x, y) ->
     for i in [0...@width]
       for j in [0...@height]
-        mv = map.grid[x + i + ((y + j) * map.width)]
-        sv = @grid[i + (j * @width)]
+        mv = map.get(x + i, y + j)
+        sv = @grid[i][j]
         if mv != EMPTY and sv != EMPTY and (mv != WALL or sv != WALL)
           return false
     return true
@@ -237,13 +239,16 @@ class Room
 class Map
   constructor: (@width, @height, @seed) ->
     @randReset()
-    @grid = new Buffer(@width * @height)
+    @grid = []
+    for i in [0...@width]
+      @grid[i] = []
+      for j in [0...@height]
+        @grid[i][j] =
+          type: EMPTY
+          x: i
+          y: j
     @bbox = new Rect 0, 0, 0, 0
     @rooms = []
-
-    for j in [0...@width]
-      for i in [0...@height]
-        @set(i, j, EMPTY)
 
   randReset: ->
     @rng = seedRandom(@seed)
@@ -252,11 +257,11 @@ class Map
     return Math.floor(@rng() * v)
 
   set: (i, j, v) ->
-    @grid[i + (j * @width)] = v
+    @grid[i][j].type = v
 
   get: (i, j) ->
     if i >= 0 and i < @width and j >= 0 and j < @height
-      return @grid[i + (j * @width)]
+      return @grid[i][j].type
     return 0
 
   addRoom: (roomTemplate, x, y) ->
@@ -298,9 +303,7 @@ class Map
         added = @generateRoom roomid
 
 generate = ->
-  W = 80
-  H = 80
-  map = new Map W, H, 10
+  map = new Map 80, 80, 10
   map.generateRooms(20)
   return map
 

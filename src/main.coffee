@@ -10,9 +10,7 @@ class Game
       game: new GameMode()
 
   newFloor: ->
-    {
-      grid: floorgen.generate()
-    }
+    floorgen.generate()
 
   currentFloor: ->
     return @state.floors[@state.player.floor]

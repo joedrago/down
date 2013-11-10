@@ -32,10 +32,10 @@ class GameMode extends Mode
     @gfx.floorLayer.setAnchorPoint(cc.p(0, 0))
 
     tiles = new Tilesheet(resources.tiles0, 16, 16, 16)
-    grid = cc.game.currentFloor().grid
-    for j in [0...grid.height]
-      for i in [0...grid.width]
-        v = grid.get(i, j)
+    floor = cc.game.currentFloor()
+    for j in [0...floor.height]
+      for i in [0...floor.width]
+        v = floor.get(i, j)
         if v != 0
           sprite = cc.Sprite.create tiles.resource
           sprite.setAnchorPoint(cc.p(0, 0))
@@ -54,7 +54,7 @@ class GameMode extends Mode
     @gfx.floorLayer.setPosition(x, y)
 
   gfxCenterMap: ->
-    center = cc.game.currentFloor().grid.bbox.center()
+    center = cc.game.currentFloor().bbox.center()
     @gfxPlaceMap(center.x * @gfx.unitSize, center.y * @gfx.unitSize, cc.width / 2, cc.height / 2)
 
   gfxScreenToMapCoords: (x, y) ->
@@ -98,7 +98,7 @@ class GameMode extends Mode
     scale = SCALE_MIN if scale < SCALE_MIN
     @gfx.floorLayer.setScale(scale)
 
-  gfxDrawPath: (path) ->
+  gfxRenderPath: (path) ->
     tiles = new Tilesheet(resources.tiles0, 16, 16, 16)
     for s in @gfx.pathSprites
       @gfx.floorLayer.removeChild s
@@ -107,7 +107,7 @@ class GameMode extends Mode
       sprite = cc.Sprite.create tiles.resource
       sprite.setAnchorPoint(cc.p(0, 0))
       sprite.setTextureRect(tiles.rect(17))
-      sprite.setPosition(cc.p(p[0] * @gfx.unitSize, p[1] * @gfx.unitSize))
+      sprite.setPosition(cc.p(p.x * @gfx.unitSize, p.y * @gfx.unitSize))
       sprite.setOpacity 128
       @gfx.floorLayer.addChild sprite
       @gfx.pathSprites.push sprite
@@ -131,7 +131,7 @@ class GameMode extends Mode
 
     pathfinder = new Pathfinder(cc.game.state.player.x, cc.game.state.player.y, gridX, gridY, 0)
     path = pathfinder.calc()
-    @gfxDrawPath(path)
+    @gfxRenderPath(path)
 
     # cc.game.state.player.x = gridX
     # cc.game.state.player.y = gridY
