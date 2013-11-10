@@ -5,7 +5,7 @@ Pathfinder = require 'world/pathfinder'
 Tilesheet = require 'gfx/tilesheet'
 
 UNIT_SIZE = 16
-SCALE_MIN = 2.0
+SCALE_MIN = 1.5
 SCALE_MAX = 8.0
 
 class GameMode extends Mode
