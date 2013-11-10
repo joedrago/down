@@ -1,6 +1,7 @@
 Mode = require 'base/mode'
 resources = require 'resources'
 floorgen = require 'world/floorgen'
+Pathfinder = require 'world/pathfinder'
 Tilesheet = require 'gfx/tilesheet'
 
 UNIT_SIZE = 16
@@ -24,6 +25,7 @@ class GameMode extends Mode
         @remove @gfx.floorLayer
     @gfx =
       unitSize: UNIT_SIZE
+      pathSprites: []
 
   gfxRenderFloor: ->
     @gfx.floorLayer = new cc.Layer()
@@ -96,6 +98,20 @@ class GameMode extends Mode
     scale = SCALE_MIN if scale < SCALE_MIN
     @gfx.floorLayer.setScale(scale)
 
+  gfxDrawPath: (path) ->
+    tiles = new Tilesheet(resources.tiles0, 16, 16, 16)
+    for s in @gfx.pathSprites
+      @gfx.floorLayer.removeChild s
+    @gfx.pathSprites = []
+    for p in path
+      sprite = cc.Sprite.create tiles.resource
+      sprite.setAnchorPoint(cc.p(0, 0))
+      sprite.setTextureRect(tiles.rect(17))
+      sprite.setPosition(cc.p(p[0] * @gfx.unitSize, p[1] * @gfx.unitSize))
+      sprite.setOpacity 128
+      @gfx.floorLayer.addChild sprite
+      @gfx.pathSprites.push sprite
+
   onDrag: (dx, dy) ->
     pos = @gfx.floorLayer.getPosition()
     @gfx.floorLayer.setPosition(pos.x + dx, pos.y + dy)
@@ -112,9 +128,13 @@ class GameMode extends Mode
     pos = @gfxScreenToMapCoords(x, y)
     gridX = Math.floor(pos.x / @gfx.unitSize)
     gridY = Math.floor(pos.y / @gfx.unitSize)
-    # cc.log "grid click #{gridX}, #{gridY}"
-    cc.game.state.player.x = gridX
-    cc.game.state.player.y = gridY
-    @gfxUpdatePositions()
+
+    pathfinder = new Pathfinder(cc.game.state.player.x, cc.game.state.player.y, gridX, gridY, 0)
+    path = pathfinder.calc()
+    @gfxDrawPath(path)
+
+    # cc.game.state.player.x = gridX
+    # cc.game.state.player.y = gridY
+    # @gfxUpdatePositions()
 
 module.exports = GameMode

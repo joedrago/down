@@ -12,6 +12,7 @@ modules = [
 
   'world/floor'
   'world/floorgen'
+  'world/pathfinder'
 
   'mode/intro'
   'mode/game'
