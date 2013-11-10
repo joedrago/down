@@ -6,7 +6,7 @@ module.exports =
   box2d:false
   chipmunk:false
   showFPS:true
-  frameRate:30
+  frameRate:60
   loadExtension:false
   renderMode:0
   tag:'gameCanvas'

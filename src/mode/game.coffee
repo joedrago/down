@@ -118,13 +118,29 @@ class GameMode extends Mode
     gridX = Math.floor(pos.x / cc.unitSize)
     gridY = Math.floor(pos.y / cc.unitSize)
 
-    cc.game.state.player.act(gridX, gridY)
+    if not cc.game.state.running
+      cc.game.state.player.act(gridX, gridY)
+      cc.game.state.running = true
+      cc.log "running"
 
     # pathfinder = new Pathfinder(cc.game.currentFloor(), 0)
     # path = pathfinder.calc(cc.game.state.player.x, cc.game.state.player.y, gridX, gridY)
     # @gfxRenderPath(path)
 
   update: (dt) ->
-    cc.game.state.player.think(dt, @gfx.player.sprite)
+    cc.game.state.player.updateSprite(@gfx.player.sprite)
+
+    if cc.game.turnFrames > 0
+      cc.game.turnFrames--
+    else
+      if cc.game.state.running
+        minimumCD = 1000
+        if minimumCD > cc.game.state.player.cd
+          minimumCD = cc.game.state.player.cd
+        # TODO: check cd of all NPCs on the floor against the minimumCD
+        cc.game.state.player.tick(minimumCD)
+        if cc.game.state.player.cd == 0 # We just ran, yet did nothing
+          cc.game.state.running = false
+          cc.log "not running"
 
 module.exports = GameMode

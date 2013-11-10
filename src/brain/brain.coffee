@@ -1,5 +1,6 @@
 class Brain
   constructor: (@tiles, @animFrame) ->
+    @facingRight = true
     @cd = 0
     @interpFrames = []
     @path = []
@@ -8,6 +9,7 @@ class Brain
     @interpFrames = []
     dx = (@x - gx) * cc.unitSize
     dy = (@y - gy) * cc.unitSize
+    @facingRight = (dx < 0)
     i = frames.length
     for f in frames
       animFrame = {
@@ -28,7 +30,6 @@ class Brain
 
   createSprite: ->
     s = cc.Sprite.create @tiles.resource
-    s.setAnchorPoint(cc.p(0, 0))
     @updateSprite(s)
     return s
 
@@ -41,15 +42,35 @@ class Brain
       x += frame.x
       y += frame.y
       animFrame = frame.animFrame
+    # else
+    #   animFrame = Math.floor(Math.random() * 2)
     sprite.setTextureRect(@tiles.rect(animFrame))
     sprite.setPosition(cc.p(x, y))
+    xanchor = 1.0
+    xscale = -1.0
+    if @facingRight
+      xanchor = 0
+      xscale = 1.0
+    sprite.setScaleX(xscale)
+    sprite.setAnchorPoint(cc.p(xanchor, 0))
 
-  think: (dt, sprite) ->
+  takeStep: ->
     if @interpFrames.length == 0
       if @path.length > 0
         step = @path.splice(0, 1)[0]
         # cc.log "taking step to #{step.x}, #{step.y}"
         @move(step.x, step.y, [2,3,4])
-    @updateSprite(sprite)
+        return true
+    return false
+
+  tick: (elapsedTurns) ->
+    if @cd > 0
+      @cd -= elapsedTurns if @cd > 0
+      @cd = 0 if @cd < 0
+    if @cd == 0
+      @think()
+
+  think: ->
+    cc.log "think not implemented!"
 
 module.exports = Brain

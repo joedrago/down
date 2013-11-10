@@ -12,8 +12,9 @@ class Player extends Brain
 
   walkPath: (@path) ->
 
-  think: (dt, sprite) ->
-    super(dt, sprite)
+  think: ->
+    if @takeStep()
+      @cd = 50
 
   act: (gx, gy) ->
     pathfinder = new Pathfinder(cc.game.currentFloor(), 0)

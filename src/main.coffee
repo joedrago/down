@@ -20,6 +20,7 @@ class Game
   newGame: ->
     cc.log "newGame"
     @state = {
+      running: false
       player: new Player({
         x: 40
         y: 40
