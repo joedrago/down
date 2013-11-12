@@ -8,7 +8,7 @@ class Player extends Brain
     @animFrame = 0
     for k,v of data
       this[k] = v
-    super new Tilesheet(resources.player, 12, 14, 18), @animFrame
+    super resources.tilesheets.player, @animFrame
 
   walkPath: (@path) ->
 

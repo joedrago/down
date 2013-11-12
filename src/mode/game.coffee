@@ -3,7 +3,6 @@ config = require 'config'
 resources = require 'resources'
 floorgen = require 'world/floorgen'
 Pathfinder = require 'world/pathfinder'
-Tilesheet = require 'gfx/tilesheet'
 
 class GameMode extends Mode
   constructor: ->
@@ -20,33 +19,22 @@ class GameMode extends Mode
     if @gfx?
       if @gfx.floorLayer?
         @remove @gfx.floorLayer
-    @gfx =
-      pathSprites: []
+    @gfx = {}
 
   gfxRenderFloor: ->
     floor = cc.game.currentFloor()
 
     @gfx.floorLayer = new cc.Layer()
     @gfx.floorLayer.setAnchorPoint(cc.p(0, 0))
-    @gfx.floorBatchNode = new cc.SpriteBatchNode()
-    @gfx.floorBatchNode.init(resources.tiles0, (floor.width * floor.height) / 2)
+    @gfx.floorBatchNode = resources.tilesheets.tiles0.createBatchNode((floor.width * floor.height) / 2)
     @gfx.floorLayer.addChild @gfx.floorBatchNode, -1
-
-    tiles = new Tilesheet(resources.tiles0, 16, 16, 16)
-    adjustedScale = tiles.adjustedScale()
-    cc.log "adjusted scale: #{adjustedScale.x}, #{adjustedScale.y}"
     for j in [0...floor.height]
       for i in [0...floor.width]
         v = floor.get(i, j)
         if v != 0
-          sprite = cc.Sprite.createWithTexture(@gfx.floorBatchNode.getTexture(), tiles.rect(@tileForGridValue(v)))
-          sprite.setAnchorPoint(cc.p(0, 0))
-          sprite.setPosition(cc.p(i * cc.unitSize, j * cc.unitSize))
-          sprite.setScale(adjustedScale.x, adjustedScale.y)
-          @gfx.floorBatchNode.addChild sprite
+          @gfx.floorBatchNode.createSprite(@tileForGridValue(v), i * cc.unitSize, j * cc.unitSize)
 
     @gfx.floorLayer.setScale(config.scale.min)
-    @gfx.floorLayer.setScale(1.0)
     @add @gfx.floorLayer
     @gfxCenterMap()
 
@@ -73,15 +61,6 @@ class GameMode extends Mode
     @gfx.player.sprite = cc.game.state.player.createSprite()
     @gfx.floorLayer.addChild @gfx.player.sprite, 0
 
-  # gfxUpdatePositions: ->
-  #   player = cc.game.state.player
-  #   x = player.x * cc.unitSize
-  #   y = player.y * cc.unitSize
-  #   @gfx.player.sprite.setPosition(cc.p(x, y))
-  #   if player.prevAnimFrame != player.animFrame
-  #     @gfx.player.sprite.setTextureRect(@gfx.player.tiles.rect(player.animFrame))
-  #     player.prevAnimFrame = player.animFrame
-
   gfxAdjustMapScale: (delta) ->
     scale = @gfx.floorLayer.getScale()
     scale += delta
@@ -90,18 +69,14 @@ class GameMode extends Mode
     @gfx.floorLayer.setScale(scale)
 
   gfxRenderPath: (path) ->
-    tiles = new Tilesheet(resources.tiles0, 16, 16, 16)
-    for s in @gfx.pathSprites
-      @gfx.floorLayer.removeChild s
-    @gfx.pathSprites = []
+    if @gfx.pathBatchNode?
+      @gfx.floorLayer.removeChild @gfx.pathBatchNode
+    return if path.length == 0
+    @gfx.pathBatchNode = resources.tilesheets.tiles0.createBatchNode(path.length)
+    @gfx.floorLayer.addChild @gfx.pathBatchNode
     for p in path
-      sprite = cc.Sprite.create tiles.resource
-      sprite.setAnchorPoint(cc.p(0, 0))
-      sprite.setTextureRect(tiles.rect(17))
-      sprite.setPosition(cc.p(p.x * cc.unitSize, p.y * cc.unitSize))
-      sprite.setOpacity 128
-      @gfx.floorLayer.addChild sprite
-      @gfx.pathSprites.push sprite
+      sprite = @gfx.pathBatchNode.createSprite(17, p.x * cc.unitSize, p.y * cc.unitSize)
+      sprite.setOpacity(128)
 
   onDrag: (dx, dy) ->
     pos = @gfx.floorLayer.getPosition()

@@ -4,7 +4,7 @@ resources = require 'resources'
 class IntroMode extends Mode
   constructor: ->
     super("Intro")
-    @sprite = cc.Sprite.create resources.splashscreen
+    @sprite = cc.Sprite.create resources.images.splashscreen
     @sprite.setPosition(cc.p(cc.width / 2, cc.height / 2))
     @add @sprite
 
