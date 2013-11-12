@@ -24,20 +24,26 @@ class GameMode extends Mode
       pathSprites: []
 
   gfxRenderFloor: ->
+    floor = cc.game.currentFloor()
+
     @gfx.floorLayer = new cc.Layer()
     @gfx.floorLayer.setAnchorPoint(cc.p(0, 0))
+    @gfx.floorBatchNode = new cc.SpriteBatchNode()
+    @gfx.floorBatchNode.init(resources.tiles0, (floor.width * floor.height) / 2)
+    @gfx.floorLayer.addChild @gfx.floorBatchNode, -1
 
     tiles = new Tilesheet(resources.tiles0, 16, 16, 16)
-    floor = cc.game.currentFloor()
+    adjustedScale = tiles.adjustedScale()
+    cc.log "adjusted scale: #{adjustedScale.x}, #{adjustedScale.y}"
     for j in [0...floor.height]
       for i in [0...floor.width]
         v = floor.get(i, j)
         if v != 0
-          sprite = cc.Sprite.create tiles.resource
+          sprite = cc.Sprite.createWithTexture(@gfx.floorBatchNode.getTexture(), tiles.rect(@tileForGridValue(v)))
           sprite.setAnchorPoint(cc.p(0, 0))
-          sprite.setTextureRect(tiles.rect(@tileForGridValue(v)))
           sprite.setPosition(cc.p(i * cc.unitSize, j * cc.unitSize))
-          @gfx.floorLayer.addChild sprite, -1
+          sprite.setScale(adjustedScale.x, adjustedScale.y)
+          @gfx.floorBatchNode.addChild sprite
 
     @gfx.floorLayer.setScale(config.scale.min)
     @gfx.floorLayer.setScale(1.0)
