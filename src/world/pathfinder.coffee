@@ -111,83 +111,80 @@ class AStar
     for x in [0...@floor.width]
       for y in [0...@floor.height]
         node = @floor.grid[x][y]
-        node.f = 0
-        node.g = 0
-        node.h = 0
-        node.cost = node.type
+        node.distance = 99999
         node.visited = false
-        node.closed = false
+        node.heaped = false
         node.parent = null
 
-  heap: ->
+  createHeap: ->
     return new BinaryHeap (node) ->
-      return node.f
+      return node.distance
 
   search: (start, end) ->
     grid = @floor.grid
     heuristic = @manhattan
 
-    openHeap = @heap()
-    openHeap.push(start)
+    start.distance = 0
 
-    while openHeap.size() > 0
-      # Grab the lowest f(x) to process next.  Heap keeps this sorted for us.
-      currentNode = openHeap.pop()
+    heap = @createHeap()
+    heap.push(start)
+    start.heaped = true
 
-      # End case -- result has been found, return the traced path.
+    while heap.size() > 0
+      currentNode = heap.pop()
+      currentNode.visited = true
+
+      # cc.log "considering #{currentNode.x}, #{currentNode.y}"
+
       if currentNode == end
-        curr = currentNode
         ret = []
+        curr = end
         while curr.parent
-          ret.push(curr)
+          ret.push({x:curr.x, y:curr.y})
           curr = curr.parent
-
         return ret.reverse()
-
-      # Normal case -- move currentNode from open to closed, process each of its neighbors.
-      currentNode.closed = true
 
       # Find all neighbors for the current node.
       neighbors = @neighbors(grid, currentNode)
 
       for neighbor in neighbors
-        if neighbor.closed or (neighbor.type == floorgen.WALL)
+        if neighbor.visited or (neighbor.type == floorgen.WALL)
           # Not a valid node to process, skip to next neighbor.
           continue
 
-        # The g score is the shortest distance from start to current node.
+        # cc.log "checking [#{currentNode.x}, #{currentNode.y}] -> [#{neighbor.x}, #{neighbor.y}]"
+
+        # The distance is the shortest distance from start to current node.
         # We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
-        gScore = currentNode.g + neighbor.cost
-        beenVisited = neighbor.visited
+        alt = currentNode.distance + 1
+        isDiagonal = (currentNode.x != neighbor.x) and (currentNode.y != neighbor.y)
+        if isDiagonal
+          alt += 0.001
 
-        if (not beenVisited) or (gScore < neighbor.g)
-          # Found an optimal (so far) path to this node.  Take score for node to see how good it is.
-          neighbor.visited = true
+        if (alt <= neighbor.distance) and not neighbor.visited
+          # Found an optimal (so far) path to this node.
+          neighbor.distance = alt
           neighbor.parent = currentNode
-          neighbor.h = neighbor.h or heuristic(neighbor.x, neighbor.y, end.x, end.y)
-          neighbor.g = gScore
-          neighbor.f = neighbor.g + neighbor.h
-
-          if not beenVisited
-            # Pushing to heap will put it in proper place based on the 'f' value.
-            openHeap.push(neighbor)
+          cc.log "neighbor [#{neighbor.x}, #{neighbor.y}] now via #{currentNode.x}, #{currentNode.y}: #{neighbor.distance}"
+          if neighbor.heaped
+            heap.rescoreElement(neighbor)
           else
-            # Already seen the node, but since it has been rescored we need to reorder it in the heap
-            openHeap.rescoreElement(neighbor)
+            heap.push(neighbor)
+            neighbor.heaped = true
 
-    # No result was found - empty array signifies failure to find path.
+    cc.log "while loop ended"
+
+    cc.log "start #{start.x}, #{start.y}"
+    cc.log "end #{end.x}, #{end.y}"
+
+    # for x in [0...@floor.width]
+    #   for y in [0...@floor.height]
+    #     curr = @floor.grid[x][y]
+    #     if curr.parent
+    #       ret.push({x:curr.x, y:curr.y})
+    # return ret
+
     return []
-
-  manhattan: (x0, y0, x1, y1) ->
-    # See list of heuristics: http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
-    d1 = Math.abs (x1 - x0)
-    d2 = Math.abs (y1 - y0)
-    return d1 + d2
-
-  distSquared: (x0, y0, x1, y1) ->
-    dx = x1 - x0
-    dy = y1 - y0
-    return (dx * dx) + (dy * dy)
 
   neighbors: (grid, node) ->
     ret = []

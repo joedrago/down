@@ -22,8 +22,8 @@ class Game
     @state = {
       running: false
       player: new Player({
-        x: 40
-        y: 40
+        x: 44
+        y: 49
         floor: 1
       })
       floors: [
