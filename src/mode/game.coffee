@@ -99,14 +99,14 @@ class GameMode extends Mode
     gridX = Math.floor(pos.x / cc.unitSize)
     gridY = Math.floor(pos.y / cc.unitSize)
 
-    # if not cc.game.state.running
-    #   cc.game.state.player.act(gridX, gridY)
-    #   cc.game.state.running = true
-    #   cc.log "running"
+    if not cc.game.state.running
+      cc.game.state.player.act(gridX, gridY)
+      cc.game.state.running = true
+      cc.log "running"
 
-    pathfinder = new Pathfinder(cc.game.currentFloor(), 0)
-    path = pathfinder.calc(cc.game.state.player.x, cc.game.state.player.y, gridX, gridY)
-    @gfxRenderPath(path)
+    # pathfinder = new Pathfinder(cc.game.currentFloor(), 0)
+    # path = pathfinder.calc(cc.game.state.player.x, cc.game.state.player.y, gridX, gridY)
+    # @gfxRenderPath(path)
 
   update: (dt) ->
     cc.game.state.player.updateSprite(@gfx.player.sprite)

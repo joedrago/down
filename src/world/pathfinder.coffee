@@ -70,14 +70,14 @@ class Dijkstra
 
         # The distance is the shortest distance from start to current node.
         # We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
-        alt = currentNode.distance + 1
+        neighborDistanceViaThisNode = currentNode.distance + 1
         isDiagonal = (currentNode.x != neighbor.x) and (currentNode.y != neighbor.y)
         if isDiagonal
-          alt += 0.1
+          neighborDistanceViaThisNode += 0.1
 
-        if (alt < neighbor.distance) and not neighbor.visited
+        if (neighborDistanceViaThisNode < neighbor.distance) and not neighbor.visited
           # Found an optimal (so far) path to this node.
-          neighbor.distance = alt
+          neighbor.distance = neighborDistanceViaThisNode
           neighbor.parent = currentNode
           if neighbor.heaped
             heap.rescore(neighbor)
