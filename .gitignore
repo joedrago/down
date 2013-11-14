@@ -9,3 +9,6 @@
 /phone/project.android/gen
 /phone/project.android/libs
 /phone/project.android/obj
+/game/res/gen
+/game/down.js
+/src/art/tiles/*.coffee

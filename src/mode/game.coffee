@@ -8,11 +8,11 @@ class GameMode extends Mode
   constructor: ->
     super("Game")
 
-  tileForGridValue: (v) ->
+  rectForGridValue: (tiles, v) ->
     switch
-      when v == floorgen.WALL then 1
-      when v == floorgen.DOOR then 2
-      when v >= floorgen.FIRST_ROOM_ID then 0
+      when v == floorgen.WALL then tiles.random_wall()
+      when v == floorgen.DOOR then tiles.door
+      when v >= floorgen.FIRST_ROOM_ID then tiles.random_floor()
       else 0
 
   gfxClear: ->
@@ -23,16 +23,17 @@ class GameMode extends Mode
 
   gfxRenderFloor: ->
     floor = cc.game.currentFloor()
+    tiles = resources.tilesheets.tiles0
 
     @gfx.floorLayer = new cc.Layer()
     @gfx.floorLayer.setAnchorPoint(cc.p(0, 0))
-    @gfx.floorBatchNode = resources.tilesheets.tiles0.createBatchNode((floor.width * floor.height) / 2)
+    @gfx.floorBatchNode = tiles.createBatchNode((floor.width * floor.height) / 2)
     @gfx.floorLayer.addChild @gfx.floorBatchNode, -1
     for j in [0...floor.height]
       for i in [0...floor.width]
         v = floor.get(i, j)
         if v != 0
-          @gfx.floorBatchNode.createSprite(@tileForGridValue(v), i * cc.unitSize, j * cc.unitSize)
+          @gfx.floorBatchNode.createSprite(@rectForGridValue(tiles, v), i * cc.unitSize, j * cc.unitSize)
 
     @gfx.floorLayer.setScale(config.scale.min)
     @add @gfx.floorLayer

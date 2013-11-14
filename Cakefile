@@ -3,6 +3,8 @@
 
 # Assumed to be in src/XXXXX.coffee, @is also the require() string
 modules = [
+  'art/tiles/tiles0'
+
   'base/mode'
 
   'boot/mainweb'
@@ -59,7 +61,9 @@ tilesheetHeight = 512
 tilePadding = 1
 
 coffeeFileRegex = /\.coffee$/
-tilesFileRegex = /[\\\/]tiles[\\\/]([^\\\/]+)[\\\/]\d+\.png$/
+pngBasenameRegex = /([^\\\/]+)\.png$/
+trailingNumberRegex = /(.*[^\d])(\d+)$/
+tilesFileRegex = /[\\\/]tiles[\\\/]([^\\\/]+)[\\\/][A-Za-z0-9_]+\.png$/
 
 generateJSBundle = (cb) ->
   b = browserify {
@@ -84,12 +88,18 @@ generateJSBundle = (cb) ->
         cb() if cb?
 
 readpng = (filename, cb) ->
+  basename = pngBasenameRegex.exec(filename)[1]
   png = pngReader.load filename
   png.decode (pixels) ->
-    return cb(null, { filename: filename, png: png, pixels: pixels })
+    return cb(null, { name: basename, filename: filename, png: png, pixels: pixels })
 
 generateTilesheet = (tilesheetName, cb) ->
-  outputFilename = "game/res/#{tilesheetName}.png"
+  try
+    fs.mkdirSync "game/res/gen", '0777'
+  catch e
+    # derp
+  metricsFilename = "#{srcDir}art/tiles/#{tilesheetName}.coffee"
+  pngFilename = "game/res/gen/#{tilesheetName}.png"
   tiles = fs.readdirSync srcDir + 'art/tiles/' + tilesheetName
   tiles.sort()
   filenames = ("#{srcDir}art/tiles/#{tilesheetName}/#{t}" for t in tiles)
@@ -110,6 +120,9 @@ generateTilesheet = (tilesheetName, cb) ->
         maxY = 0
       if maxY < r.png.height
         maxY = r.png.height
+
+      r.x = x
+      r.y = y
 
       # Pad top and bottom
       srcPixels = r.pixels
@@ -192,15 +205,46 @@ generateTilesheet = (tilesheetName, cb) ->
           srcIndex += 4
       x += r.png.width + (tilePadding * 2)
 
-    png.pack().pipe(fs.createWriteStream(outputFilename))
+    # generate metrics
+    metrics = "module.exports =\n"
+    metrics += "  # resource\n"
+    metrics += "  _resource: 'res/gen/#{tilesheetName}.png'\n"
+    metrics += "\n  # tiles by name\n"
+    metricsArrays = {}
+    for r in results
+      metrics += "  #{r.name}: cc.rect(#{r.x},#{r.y},#{r.png.width},#{r.png.height})\n"
+      numberMatch = trailingNumberRegex.exec(r.name)
+      if numberMatch
+        name = numberMatch[1]
+        number = parseInt(numberMatch[2])
+        if not metricsArrays[name]?
+          metricsArrays[name] = []
+        metricsArrays[name].push({ r: r, number: number })
+
+    metrics += "\n  # tiles by array\n"
+    for name,metricsArray of metricsArrays
+      metricsArray.sort (a, b) ->
+        return a.number - b.number
+      metrics += "  #{name}: [\n"
+      for e in metricsArray
+        metrics += "    cc.rect(#{e.r.x},#{e.r.y},#{e.r.png.width},#{e.r.png.height}) # #{e.r.name}\n"
+      metrics += "  ]\n"
+      metrics += "  random_#{name}: -> this.#{name}[Math.floor(Math.random()*this.#{name}.length)]\n"
+
+    fs.writeFileSync(metricsFilename, metrics)
+    util.log "Generated #{metricsFilename}"
+
+    # write tilesheet png
+    png.pack().pipe(fs.createWriteStream(pngFilename))
       .on 'finish', ->
-        util.log "Generated #{outputFilename} (#{results.length} tiles)"
+        util.log "Generated #{pngFilename} (#{results.length} tiles)"
         cb() if cb # clue in the caller of generateTilesheet that we're done
 
 buildEverything = (cb) ->
-  generateJSBundle ->
-    tilesheetNames = fs.readdirSync srcDir + 'art/tiles'
-    async.map tilesheetNames, generateTilesheet, (err) ->
+  tilesheetNames = fs.readdirSync srcDir + 'art/tiles'
+  tilesheetNames = tilesheetNames.filter (name) -> !coffeeFileRegex.test(name)
+  async.map tilesheetNames, generateTilesheet, (err) ->
+    generateJSBundle ->
       util.log "Build complete."
       cb() if cb
 
