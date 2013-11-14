@@ -54,7 +54,9 @@ srcDirFromGameDir = '../' + srcDir
 gameDir = 'game/'
 bundleFile = gameDir + 'down.js'
 
-tilePadding = 0
+tilesheetWidth = 512
+tilesheetHeight = 512
+tilePadding = 1
 
 coffeeFileRegex = /\.coffee$/
 tilesFileRegex = /[\\\/]tiles[\\\/]([^\\\/]+)[\\\/]\d+\.png$/
@@ -93,8 +95,8 @@ generateTilesheet = (tilesheetName, cb) ->
   filenames = ("#{srcDir}art/tiles/#{tilesheetName}/#{t}" for t in tiles)
   async.map filenames, readpng, (err, results) ->
     png = new pngWriter {
-      width: 512
-      height: 512
+      width: tilesheetWidth
+      height: tilesheetHeight
       filterType: -1
     }
 
@@ -108,11 +110,81 @@ generateTilesheet = (tilesheetName, cb) ->
         maxY = 0
       if maxY < r.png.height
         maxY = r.png.height
+
+      # Pad top and bottom
+      srcPixels = r.pixels
+      for j in [0...tilePadding]
+        for i in [0...r.png.width]
+          # top
+          srcIndex = 4 * i
+          dstIndex = 4 * ((x+i) + ((y+j-tilePadding) * tilesheetWidth))
+          png.data[dstIndex]   = srcPixels[srcIndex]
+          png.data[dstIndex+1] = srcPixels[srcIndex+1]
+          png.data[dstIndex+2] = srcPixels[srcIndex+2]
+          png.data[dstIndex+3] = srcPixels[srcIndex+3]
+
+          # bottom
+          srcIndex = 4 * (i + ((r.png.height-1) * r.png.width))
+          dstIndex = 4 * ((x+i) + ((y+j+r.png.height) * tilesheetWidth))
+          png.data[dstIndex]   = srcPixels[srcIndex]
+          png.data[dstIndex+1] = srcPixels[srcIndex+1]
+          png.data[dstIndex+2] = srcPixels[srcIndex+2]
+          png.data[dstIndex+3] = srcPixels[srcIndex+3]
+
+      # Pad left and right
+      srcPixels = r.pixels
+      for j in [0...r.png.height]
+        for i in [0...tilePadding]
+          # left
+          srcIndex = 4 * (j * r.png.width)
+          dstIndex = 4 * ((x+i-tilePadding) + ((y+j) * tilesheetWidth))
+          png.data[dstIndex]   = srcPixels[srcIndex]
+          png.data[dstIndex+1] = srcPixels[srcIndex+1]
+          png.data[dstIndex+2] = srcPixels[srcIndex+2]
+          png.data[dstIndex+3] = srcPixels[srcIndex+3]
+
+          # right
+          srcIndex = 4 * (r.png.width-1 + (j * r.png.width))
+          dstIndex = 4 * ((x+i+r.png.width) + ((y+j) * tilesheetWidth))
+          png.data[dstIndex]   = srcPixels[srcIndex]
+          png.data[dstIndex+1] = srcPixels[srcIndex+1]
+          png.data[dstIndex+2] = srcPixels[srcIndex+2]
+          png.data[dstIndex+3] = srcPixels[srcIndex+3]
+
+      # Pad corners
+      tlIndex = 0
+      trIndex = 4 * (r.png.width - 1)
+      blIndex = 4 * (r.png.width * (r.png.height-1))
+      brIndex = 4 * ((r.png.width * r.png.height)-1)
+      for j in [0...tilePadding]
+        for i in [0...tilePadding]
+          dstIndex = 4 * ((x+i-tilePadding) + ((y+j-tilePadding) * tilesheetWidth))
+          png.data[dstIndex]   = srcPixels[tlIndex]
+          png.data[dstIndex+1] = srcPixels[tlIndex+1]
+          png.data[dstIndex+2] = srcPixels[tlIndex+2]
+          png.data[dstIndex+3] = srcPixels[tlIndex+3]
+          dstIndex = 4 * ((x+i+r.png.width) + ((y+j-tilePadding) * tilesheetWidth))
+          png.data[dstIndex]   = srcPixels[trIndex]
+          png.data[dstIndex+1] = srcPixels[trIndex+1]
+          png.data[dstIndex+2] = srcPixels[trIndex+2]
+          png.data[dstIndex+3] = srcPixels[trIndex+3]
+          dstIndex = 4 * ((x+i-tilePadding) + ((y+j+r.png.height) * tilesheetWidth))
+          png.data[dstIndex]   = srcPixels[blIndex]
+          png.data[dstIndex+1] = srcPixels[blIndex+1]
+          png.data[dstIndex+2] = srcPixels[blIndex+2]
+          png.data[dstIndex+3] = srcPixels[blIndex+3]
+          dstIndex = 4 * ((x+i+r.png.width) + ((y+j+r.png.height) * tilesheetWidth))
+          png.data[dstIndex]   = srcPixels[brIndex]
+          png.data[dstIndex+1] = srcPixels[brIndex+1]
+          png.data[dstIndex+2] = srcPixels[brIndex+2]
+          png.data[dstIndex+3] = srcPixels[brIndex+3]
+
+      # Copy the actual tile itself
       srcIndex = 0
       srcPixels = r.pixels
       for j in [0...r.png.height]
         for i in [0...r.png.width]
-          dstIndex = 4 * ((x+i) + ((y+j) * 512))
+          dstIndex = 4 * ((x+i) + ((y+j) * tilesheetWidth))
           png.data[dstIndex]   = srcPixels[srcIndex]
           png.data[dstIndex+1] = srcPixels[srcIndex+1]
           png.data[dstIndex+2] = srcPixels[srcIndex+2]

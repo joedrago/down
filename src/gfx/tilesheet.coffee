@@ -1,7 +1,7 @@
 
 # This is fucking tragic.
-PIXEL_FUDGE_FACTOR = 0.5  # how many pixels to remove from the edge to remove bleed
-SCALE_FUDGE_FACTOR = 0.02  # additional sprite scale to ensure proper tiling
+PIXEL_FUDGE_FACTOR = 0 # how many pixels to remove from the edge to remove bleed
+SCALE_FUDGE_FACTOR = 0 # additional sprite scale to ensure proper tiling
 
 TilesheetBatchNode = cc.SpriteBatchNode.extend {
   init: (fileImage, capacity) ->
@@ -17,15 +17,22 @@ TilesheetBatchNode = cc.SpriteBatchNode.extend {
 }
 
 class Tilesheet
-  constructor: (@resource, @width, @height, @stride) ->
+  constructor: (@resource, @resourceWidth, @resourceHeight, @tileWidth, @tileHeight, @tilePadding) ->
+    @paddedTileWidth = @tileWidth + (@tilePadding * 2)
+    @paddedTileHeight = @tileHeight + (@tilePadding * 2)
+    @stride = Math.floor(@resourceWidth / (@tileWidth + (@tilePadding * 2)))
     @adjustedScale =
-      x: 1 + SCALE_FUDGE_FACTOR + (PIXEL_FUDGE_FACTOR / @width)
-      y: 1 + SCALE_FUDGE_FACTOR + (PIXEL_FUDGE_FACTOR / @height)
+      x: 1 + SCALE_FUDGE_FACTOR + (PIXEL_FUDGE_FACTOR / @tileWidth)
+      y: 1 + SCALE_FUDGE_FACTOR + (PIXEL_FUDGE_FACTOR / @tileHeight)
 
   rect: (v) ->
     y = Math.floor(v / @stride)
     x = v % @stride
-    return cc.rect(x * @width, y * @height, @width - PIXEL_FUDGE_FACTOR, @height - PIXEL_FUDGE_FACTOR)
+    return cc.rect(
+      @tilePadding + (x * @paddedTileWidth),
+      @tilePadding + (y * @paddedTileHeight),
+      @tileWidth - PIXEL_FUDGE_FACTOR,
+      @tileHeight - PIXEL_FUDGE_FACTOR)
 
   createBatchNode: (capacity) ->
     batchNode = new TilesheetBatchNode()

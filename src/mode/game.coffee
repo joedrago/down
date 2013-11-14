@@ -10,9 +10,9 @@ class GameMode extends Mode
 
   tileForGridValue: (v) ->
     switch
-      when v == floorgen.WALL then 16
-      when v == floorgen.DOOR then 5
-      when v >= floorgen.FIRST_ROOM_ID then 18
+      when v == floorgen.WALL then 1
+      when v == floorgen.DOOR then 2
+      when v >= floorgen.FIRST_ROOM_ID then 0
       else 0
 
   gfxClear: ->
