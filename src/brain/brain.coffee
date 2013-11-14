@@ -29,7 +29,7 @@ class Brain
   walkPath: (@path) ->
 
   createSprite: ->
-    s = cc.Sprite.create @tiles.resource
+    s = @tiles.createSprite 0, 0, 0
     @updateSprite(s)
     return s
 
@@ -46,13 +46,7 @@ class Brain
     #   animFrame = Math.floor(Math.random() * 2)
     sprite.setTextureRect(@tiles.rect(animFrame))
     sprite.setPosition(cc.p(x, y))
-    xanchor = 1.0
-    xscale = -1.0
-    if @facingRight
-      xanchor = 0
-      xscale = 1.0
-    sprite.setScaleX(xscale)
-    sprite.setAnchorPoint(cc.p(xanchor, 0))
+    sprite.setFlipX(!@facingRight)
 
   takeStep: ->
     if @interpFrames.length == 0

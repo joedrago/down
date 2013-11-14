@@ -28,7 +28,7 @@ class GameMode extends Mode
     @gfx.floorLayer = new cc.Layer()
     @gfx.floorLayer.setAnchorPoint(cc.p(0, 0))
     @gfx.floorBatchNode = tiles.createBatchNode((floor.width * floor.height) / 2)
-    @gfx.floorLayer.addChild @gfx.floorBatchNode, -1
+    @gfx.floorBatchNode.addTo @gfx.floorLayer, -1
     for j in [0...floor.height]
       for i in [0...floor.width]
         v = floor.get(i, j)

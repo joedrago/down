@@ -5,7 +5,8 @@ InputLayer = cc.Layer.extend {
   init: (@mode) ->
     @_super()
     @setTouchEnabled(true)
-    @setMouseEnabled(true)
+    if document?
+      @setMouseEnabled(true)
     @trackedTouches = []
 
   calcDistance: (x1, y1, x2, y2) ->
