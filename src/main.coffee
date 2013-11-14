@@ -1,3 +1,4 @@
+config = require 'config'
 resources = require 'resources'
 IntroMode = require 'mode/intro'
 GameMode = require 'mode/game'
@@ -38,7 +39,7 @@ class Game
 
 if not cc.game
   size = cc.Director.getInstance().getWinSize()
-  cc.unitSize = 16
+  cc.unitSize = config.unitSize
   cc.width = size.width
   cc.height = size.height
   cc.game = new Game()

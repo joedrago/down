@@ -6,8 +6,8 @@ images =
   player: 'res/player.png'
 
 tilesheets =
-  tiles0: new Tilesheet(images.tiles0, 16, 16, 16)
-  player: new Tilesheet(images.player, 12, 14, 18)
+  tiles0: new Tilesheet(images.tiles0, 32, 32, 16)
+  player: new Tilesheet(images.player, 24, 28, 18)
 
 module.exports =
   images: images

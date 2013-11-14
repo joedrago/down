@@ -84,7 +84,7 @@ class GameMode extends Mode
 
   onZoom: (x, y, delta) ->
     pos = @gfxScreenToMapCoords(x, y)
-    @gfxAdjustMapScale(delta / 200)
+    @gfxAdjustMapScale(delta / config.scale.speed)
     @gfxPlaceMap(pos.x, pos.y, x, y)
 
   onActivate: ->
