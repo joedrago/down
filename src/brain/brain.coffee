@@ -29,7 +29,7 @@ class Brain
   walkPath: (@path) ->
 
   createSprite: ->
-    s = @tiles.createSprite 0, 0, 0
+    s = @tiles.createSprite @animFrame, 0, 0
     @updateSprite(s)
     return s
 
