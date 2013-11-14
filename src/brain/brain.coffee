@@ -44,7 +44,7 @@ class Brain
       animFrame = frame.animFrame
     # else
     #   animFrame = Math.floor(Math.random() * 2)
-    sprite.setTextureRect(@tiles.rect(animFrame))
+    sprite.setTextureRect(animFrame)
     sprite.setPosition(cc.p(x, y))
     sprite.setFlipX(!@facingRight)
 
@@ -53,7 +53,7 @@ class Brain
       if @path.length > 0
         step = @path.splice(0, 1)[0]
         # cc.log "taking step to #{step.x}, #{step.y}"
-        @move(step.x, step.y, [2,3,4])
+        @move(step.x, step.y, @tiles.walk)
         return true
     return false
 

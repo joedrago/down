@@ -5,10 +5,9 @@ Tilesheet = require 'gfx/tilesheet'
 
 class Player extends Brain
   constructor: (data) ->
-    @animFrame = 0
     for k,v of data
       this[k] = v
-    super resources.tilesheets.player, @animFrame
+    super resources.tilesheets.player, resources.tilesheets.player.idle0
 
   walkPath: (@path) ->
 

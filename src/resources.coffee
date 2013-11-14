@@ -1,11 +1,11 @@
-{Tilesheet, GridTilesheet} = require "gfx/tilesheet"
+Tilesheet = require "gfx/tilesheet"
 
 images =
   splashscreen: 'res/splashscreen.png'
 
 tilesheets =
   tiles0: new Tilesheet(require('art/tiles/tiles0'))
-  player: new GridTilesheet('res/player.png', 512, 256, 24, 28, 0)
+  player: new Tilesheet(require('art/tiles/player'))
 
 cocosPreloadList = ({src: v} for k, v of images)
 for tilesheetName, tilesheet of tilesheets

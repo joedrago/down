@@ -4,6 +4,7 @@
 # Assumed to be in src/XXXXX.coffee, @is also the require() string
 modules = [
   'art/tiles/tiles0'
+  'art/tiles/player'
 
   'base/mode'
 
@@ -56,8 +57,9 @@ srcDirFromGameDir = '../' + srcDir
 gameDir = 'game/'
 bundleFile = gameDir + 'down.js'
 
-tilesheetWidth = 512
-tilesheetHeight = 512
+# TODO: choose a size based on the incoming sprites
+tilesheetWidth = 256
+tilesheetHeight = 128
 tilePadding = 1
 
 coffeeFileRegex = /\.coffee$/
@@ -114,7 +116,7 @@ generateTilesheet = (tilesheetName, cb) ->
     y = tilePadding
     maxY = 0
     for r in results
-      if (x + r.png.width) > png.height
+      if (x + r.png.width) > png.width
         x = tilePadding
         y += maxY + (tilePadding * 2)
         maxY = 0

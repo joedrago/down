@@ -7,10 +7,8 @@ class BatchNode
   addTo: (layer, depth) ->
     layer.addChild @node, depth
 
-  rect: (v) -> @tilesheet.rect(v)
-
   createSprite: (which, x, y) ->
-    sprite = cc.Sprite.createWithTexture(@node.getTexture(), @tilesheet.rect(which))
+    sprite = cc.Sprite.createWithTexture(@node.getTexture(), which)
     @node.addChild sprite
     return @tilesheet.prepareSprite(sprite, x, y)
 
@@ -19,11 +17,8 @@ class Tilesheet
     for k,v of data
       this[k] = v
 
-  rect: (v) ->
-    return v
-
   createSprite: (which, x, y) ->
-    sprite = cc.Sprite.create @_resource, @rect(which)
+    sprite = cc.Sprite.create @_resource, which
     return @prepareSprite(sprite, x, y)
 
   prepareSprite: (sprite, x, y) ->
@@ -35,21 +30,4 @@ class Tilesheet
     batchNode = new BatchNode(this, capacity)
     return batchNode
 
-class GridTilesheet extends Tilesheet
-  constructor: (@_resource, @resourceWidth, @resourceHeight, @tileWidth, @tileHeight, @tilePadding) ->
-    @paddedTileWidth = @tileWidth + (@tilePadding * 2)
-    @paddedTileHeight = @tileHeight + (@tilePadding * 2)
-    @stride = Math.floor(@resourceWidth / (@tileWidth + (@tilePadding * 2)))
-
-  rect: (v) ->
-    y = Math.floor(v / @stride)
-    x = v % @stride
-    return cc.rect(
-      @tilePadding + (x * @paddedTileWidth),
-      @tilePadding + (y * @paddedTileHeight),
-      @tileWidth,
-      @tileHeight)
-
-module.exports =
-  Tilesheet: Tilesheet
-  GridTilesheet: GridTilesheet
+module.exports = Tilesheet
