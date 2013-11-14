@@ -12,7 +12,7 @@ class GameMode extends Mode
     switch
       when v == floorgen.WALL then 16
       when v == floorgen.DOOR then 5
-      when v >= floorgen.FIRST_ROOM_ID then 18
+      when v >= floorgen.FIRST_ROOM_ID then 1
       else 0
 
   gfxClear: ->
