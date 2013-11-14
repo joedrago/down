@@ -6,6 +6,10 @@
     "browserify": "*",
     "coffeeify": "*",
     "seed-random": "*",
-    "mold-source-map": "*"
+    "mold-source-map": "*",
+    "node-watch": "*",
+    "png-js": "*",
+    "pngjs": "*",
+    "async": "*"
   }
 }

@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------------
 # Game Sources
 
-# Assumed to be in src/XXXXX.coffee, this is also the require() string
+# Assumed to be in src/XXXXX.coffee, @is also the require() string
 modules = [
   'base/mode'
 
@@ -41,16 +41,25 @@ externals = [
 # -------------------------------------------------------------------------------
 # Build scripts
 
+async      = require 'async'
 browserify = require 'browserify'
 fs         = require 'fs'
 util       = require 'util'
+pngReader  = require 'png-js'
+pngWriter  = require('pngjs').PNG
+watch      = require 'node-watch'
 
 srcDir = 'src/'
 srcDirFromGameDir = '../' + srcDir
 gameDir = 'game/'
 bundleFile = gameDir + 'down.js'
 
-task 'build', 'build game', (options) ->
+tilePadding = 0
+
+coffeeFileRegex = /\.coffee$/
+tilesFileRegex = /[\\\/]tiles[\\\/]([^\\\/]+)[\\\/]\d+\.png$/
+
+generateJSBundle = (cb) ->
   b = browserify {
     basedir: gameDir
     extensions: ['coffee']
@@ -64,20 +73,79 @@ task 'build', 'build game', (options) ->
     b.add srcDirFromGameDir + app + '.coffee'
   bundlePipe = b.bundle({ debug: true })
     .on 'error', (err) ->
-      console.log "Error #{err}"
+      util.log "Error #{err}"
     bundlePipe
       .pipe(require('mold-source-map').transformSourcesRelativeTo(gameDir))
       .pipe(fs.createWriteStream(bundleFile))
       .on 'finish', ->
-        console.log "wrote #{bundleFile}"
+        util.log "Generated #{bundleFile}"
+        cb() if cb?
+
+readpng = (filename, cb) ->
+  png = pngReader.load filename
+  png.decode (pixels) ->
+    return cb(null, { filename: filename, png: png, pixels: pixels })
+
+generateTilesheet = (tilesheetName, cb) ->
+  outputFilename = "game/res/#{tilesheetName}.png"
+  tiles = fs.readdirSync srcDir + 'art/tiles/' + tilesheetName
+  tiles.sort()
+  filenames = ("#{srcDir}art/tiles/#{tilesheetName}/#{t}" for t in tiles)
+  async.map filenames, readpng, (err, results) ->
+    png = new pngWriter {
+      width: 512
+      height: 512
+      filterType: -1
+    }
+
+    x = tilePadding
+    y = tilePadding
+    maxY = 0
+    for r in results
+      if (x + r.png.width) > png.height
+        x = tilePadding
+        y += maxY + (tilePadding * 2)
+        maxY = 0
+      if maxY < r.png.height
+        maxY = r.png.height
+      srcIndex = 0
+      srcPixels = r.pixels
+      for j in [0...r.png.height]
+        for i in [0...r.png.width]
+          dstIndex = 4 * ((x+i) + ((y+j) * 512))
+          png.data[dstIndex]   = srcPixels[srcIndex]
+          png.data[dstIndex+1] = srcPixels[srcIndex+1]
+          png.data[dstIndex+2] = srcPixels[srcIndex+2]
+          png.data[dstIndex+3] = srcPixels[srcIndex+3]
+          srcIndex += 4
+      x += r.png.width + (tilePadding * 2)
+
+    png.pack().pipe(fs.createWriteStream(outputFilename))
+      .on 'finish', ->
+        util.log "Generated #{outputFilename} (#{results.length} tiles)"
+        cb() if cb # clue in the caller of generateTilesheet that we're done
+
+buildEverything = (cb) ->
+  generateJSBundle ->
+    tilesheetNames = fs.readdirSync srcDir + 'art/tiles'
+    async.map tilesheetNames, generateTilesheet, (err) ->
+      util.log "Build complete."
+      cb() if cb
+
+task 'build', 'build game', (options) ->
+  buildEverything()
 
 task 'watch', 'Watch prod source files and build changes', ->
-  invoke 'build'
-  util.log "Watching for changes in src"
+  buildEverything ->
+    util.log "Watching for changes in src"
 
-  for name in modules.concat(apps) then do (name) ->
-    file = srcDir + name + '.coffee'
-    fs.watchFile file, (curr, prev) ->
-      if +curr.mtime isnt +prev.mtime
-        util.log "File changed: #{file}, building..."
-        invoke 'build'
+    watch 'src', (filename) ->
+      if coffeeFileRegex.test(filename)
+        util.log "Source code #{filename} changed, regenerating bundle..."
+        generateJSBundle()
+      else
+        results = tilesFileRegex.exec(filename)
+        if results
+          tilesheetName = results[1]
+          util.log "Tile source #{filename} changed, regenerating tilesheet '#{tilesheetName}'..."
+          generateTilesheet(tilesheetName)
