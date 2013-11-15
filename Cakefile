@@ -16,6 +16,7 @@ modules = [
 
   'gfx/tilesheet'
 
+  'world/distanceheap'
   'world/floor'
   'world/floorgen'
   'world/pathfinder'

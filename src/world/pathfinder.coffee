@@ -1,7 +1,5 @@
 floorgen = require 'world/floorgen'
-
-class BinaryHeap
-  constructor: ->
+DistanceHeap = require 'world/distanceheap'
 
 class FakeHeap
   constructor: ->
@@ -21,7 +19,7 @@ class FakeHeap
   pop: ->
     return @list.shift()
 
-  rescore: (n) ->
+  adjust: (n) ->
     @sortList()
 
 class Dijkstra
@@ -35,8 +33,7 @@ class Dijkstra
         node.parent = null
 
   createHeap: ->
-    return new FakeHeap (node) ->
-      return node.distance
+    return new DistanceHeap()
 
   search: (start, end) ->
     grid = @floor.grid
@@ -80,7 +77,7 @@ class Dijkstra
           neighbor.distance = neighborDistanceViaThisNode
           neighbor.parent = currentNode
           if neighbor.heaped
-            heap.rescore(neighbor)
+            heap.adjust(neighbor)
           else
             heap.push(neighbor)
             neighbor.heaped = true
