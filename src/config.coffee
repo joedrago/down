@@ -25,3 +25,8 @@ module.exports =
     speed: 400
     min: 0.75
     max: 3.0
+
+  zOrder:
+    floor: -3
+    player: -2
+    fog: -1

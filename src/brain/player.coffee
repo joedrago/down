@@ -12,11 +12,12 @@ class Player extends Brain
   walkPath: (@path) ->
 
   think: ->
+    cc.modes.game.updateVisibility()
     if @takeStep()
       @cd = 50
 
   act: (gx, gy) ->
-    pathfinder = new Pathfinder(cc.game.currentFloor(), 0)
+    pathfinder = new Pathfinder(cc.modes.game.currentFloor(), 0)
     path = pathfinder.calc(@x, @y, gx, gy)
     @walkPath(path)
     cc.log "path is #{path.length} long"

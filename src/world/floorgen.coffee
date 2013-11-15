@@ -247,6 +247,8 @@ class Map
           type: EMPTY
           x: i
           y: j
+          visible: false
+          discovered: false
     @bbox = new Rect 0, 0, 0, 0
     @rooms = []
 

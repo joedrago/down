@@ -1,128 +1,130 @@
+Floor = require 'gfx/floor'
 Mode = require 'base/mode'
 config = require 'config'
 resources = require 'resources'
-floorgen = require 'world/floorgen'
 Pathfinder = require 'world/pathfinder'
+floorgen = require 'world/floorgen'
+Player = require 'brain/player'
 
 class GameMode extends Mode
   constructor: ->
     super("Game")
+    @turnFrames = 0
 
-  rectForGridValue: (tiles, v) ->
-    switch
-      when v == floorgen.WALL then tiles.random_wall()
-      when v == floorgen.DOOR then tiles.door
-      when v >= floorgen.FIRST_ROOM_ID then tiles.random_floor()
-      else 0
+  newFloor: ->
+    floorgen.generate()
 
-  gfxClear: ->
-    if @gfx?
-      if @gfx.floorLayer?
-        @remove @gfx.floorLayer
+  currentFloor: ->
+    return @state.floors[@state.player.floor]
+
+  newGame: ->
+    cc.log "newGame"
+    @state = {
+      running: false
+      player: new Player({
+        sight: 5 * 5 # so we can test distSquared
+        x: 44
+        y: 49
+        floor: 1
+      })
+      floors: [
+        {}
+        @newFloor()
+      ]
+    }
+    @visibleLocs = []
+
+  setTurnFrames: (count) ->
+    if @turnFrames < count
+      @turnFrames = count
+
+  gfxResetFloor: ->
+    if @gfx?.floor?
+      @gfx.floor.release()
     @gfx = {}
 
-  gfxRenderFloor: ->
-    floor = cc.game.currentFloor()
-    tiles = resources.tilesheets.tiles0
-
-    @gfx.floorLayer = new cc.Layer()
-    @gfx.floorLayer.setAnchorPoint(cc.p(0, 0))
-    @gfx.floorBatchNode = tiles.createBatchNode((floor.width * floor.height) / 2)
-    @gfx.floorBatchNode.addTo @gfx.floorLayer, -1
-    for j in [0...floor.height]
-      for i in [0...floor.width]
-        v = floor.get(i, j)
-        if v != 0
-          @gfx.floorBatchNode.createSprite(@rectForGridValue(tiles, v), i * cc.unitSize, j * cc.unitSize)
-
-    @gfx.floorLayer.setScale(config.scale.min)
-    @add @gfx.floorLayer
-    @gfxCenterMap()
-
-  gfxPlaceMap: (mapX, mapY, screenX, screenY) ->
-    scale = @gfx.floorLayer.getScale()
-    x = screenX - (mapX * scale)
-    y = screenY - (mapY * scale)
-    @gfx.floorLayer.setPosition(x, y)
-
-  gfxCenterMap: ->
-    center = cc.game.currentFloor().bbox.center()
-    @gfxPlaceMap(center.x * cc.unitSize, center.y * cc.unitSize, cc.width / 2, cc.height / 2)
-
-  gfxScreenToMapCoords: (x, y) ->
-    pos = @gfx.floorLayer.getPosition()
-    scale = @gfx.floorLayer.getScale()
-    return {
-      x: (x - pos.x) / scale
-      y: (y - pos.y) / scale
-    }
-
-  gfxRenderPlayer: ->
+    @gfx.floor = new Floor(this, @currentFloor())
     @gfx.player = {}
-    @gfx.player.sprite = cc.game.state.player.createSprite()
-    @gfx.floorLayer.addChild @gfx.player.sprite, 0
-
-  gfxAdjustMapScale: (delta) ->
-    scale = @gfx.floorLayer.getScale()
-    scale += delta
-    scale = config.scale.max if scale > config.scale.max
-    scale = config.scale.min if scale < config.scale.min
-    @gfx.floorLayer.setScale(scale)
-
-  gfxRenderPath: (path) ->
-    if @gfx.pathBatchNode?
-      @gfx.floorLayer.removeChild @gfx.pathBatchNode
-    return if path.length == 0
-    @gfx.pathBatchNode = resources.tilesheets.tiles0.createBatchNode(path.length)
-    @gfx.floorLayer.addChild @gfx.pathBatchNode
-    for p in path
-      sprite = @gfx.pathBatchNode.createSprite(17, p.x * cc.unitSize, p.y * cc.unitSize)
-      sprite.setOpacity(128)
+    @gfx.player.sprite = @state.player.createSprite()
+    @gfx.floor.layer.addChild @gfx.player.sprite, config.zOrder.player
 
   onDrag: (dx, dy) ->
-    pos = @gfx.floorLayer.getPosition()
-    @gfx.floorLayer.setPosition(pos.x + dx, pos.y + dy)
+    @gfx.floor.adjustPosition(dx, dy)
 
   onZoom: (x, y, delta) ->
-    pos = @gfxScreenToMapCoords(x, y)
-    @gfxAdjustMapScale(delta / config.scale.speed)
-    @gfxPlaceMap(pos.x, pos.y, x, y)
+    pos = @gfx.floor.screenToMapCoords(x, y)
+    @gfx.floor.adjustScale(delta / config.scale.speed)
+    @gfx.floor.place(pos.x, pos.y, x, y)
 
   onActivate: ->
-    cc.game.newGame()
-    @gfxClear()
-    @gfxRenderFloor()
-    @gfxRenderPlayer()
+    @newGame()
+    @gfxResetFloor()
+    @updateVisibility()
     cc.Director.getInstance().getScheduler().scheduleCallbackForTarget(this, @update, 1 / 60.0, cc.REPEAT_FOREVER, 0, false)
 
   onClick: (x, y) ->
-    pos = @gfxScreenToMapCoords(x, y)
+    pos = @gfx.floor.screenToMapCoords(x, y)
     gridX = Math.floor(pos.x / cc.unitSize)
     gridY = Math.floor(pos.y / cc.unitSize)
 
-    if not cc.game.state.running
-      cc.game.state.player.act(gridX, gridY)
-      cc.game.state.running = true
+    if not @state.running
+      @state.player.act(gridX, gridY)
+      @state.running = true
       cc.log "running"
 
-    # pathfinder = new Pathfinder(cc.game.currentFloor(), 0)
-    # path = pathfinder.calc(cc.game.state.player.x, cc.game.state.player.y, gridX, gridY)
-    # @gfxRenderPath(path)
+    # pathfinder = new Pathfinder(@currentFloor(), 0)
+    # path = pathfinder.calc(@state.player.x, @state.player.y, gridX, gridY)
+    # @gfx.floor.debugPath(path)
+
+  clearVisibility: ->
+    for loc in @visibleLocs
+      loc.visible = false
+      @gfx.floor.updateLoc(loc)
+    @visibleLocs = []
+
+  markVisible: (loc) ->
+    loc.visible = true
+    loc.discovered = true
+    @gfx.floor.updateLoc(loc)
+    @visibleLocs.push(loc)
+
+  updateVisibility: ->
+    @clearVisibility()
+    floor = @currentFloor()
+    for j in [-1..1] by 0.10
+      for i in [-1..1] by 0.10
+        continue if Math.abs(i)<0.10 and Math.abs(j)<0.10
+        x = px = @state.player.x
+        y = py = @state.player.y
+        # center the cast
+        px += 0.5
+        py += 0.5
+        while (v = floor.get(x, y)) > 0
+          @markVisible(floor.grid[x][y])
+          break if v == floorgen.WALL
+          break if v == floorgen.DOOR and (@state.player.x != x or @state.player.y != y)
+          px += i
+          py += j
+          x = Math.floor(px)
+          y = Math.floor(py)
+          dx = @state.player.x - x
+          dy = @state.player.y - y
+          break if (dx*dx)+(dy*dy) > @state.player.sight
 
   update: (dt) ->
-    cc.game.state.player.updateSprite(@gfx.player.sprite)
+    @state.player.updateSprite(@gfx.player.sprite)
 
-    if cc.game.turnFrames > 0
-      cc.game.turnFrames--
+    if @turnFrames > 0
+      @turnFrames--
     else
-      if cc.game.state.running
+      if @state.running
         minimumCD = 1000
-        if minimumCD > cc.game.state.player.cd
-          minimumCD = cc.game.state.player.cd
+        if minimumCD > @state.player.cd
+          minimumCD = @state.player.cd
         # TODO: check cd of all NPCs on the floor against the minimumCD
-        cc.game.state.player.tick(minimumCD)
-        if cc.game.state.player.cd == 0 # We just ran, yet did nothing
-          cc.game.state.running = false
+        @state.player.tick(minimumCD)
+        if @state.player.cd == 0 # We just ran, yet did nothing
+          @state.running = false
           cc.log "not running"
 
 module.exports = GameMode

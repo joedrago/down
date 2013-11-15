@@ -10,6 +10,6 @@ class IntroMode extends Mode
 
   onClick: (x, y) ->
     cc.log "intro click #{x}, #{y}"
-    cc.game.modes.game.activate()
+    cc.modes.game.activate()
 
 module.exports = IntroMode

@@ -15,9 +15,9 @@ modules = [
   'brain/player'
 
   'gfx/tilesheet'
+  'gfx/floor'
 
   'world/distanceheap'
-  'world/floor'
   'world/floorgen'
   'world/pathfinder'
 
@@ -26,7 +26,6 @@ modules = [
 
   'config'
   'resources'
-  'gfx'
   'main'
 ]
 

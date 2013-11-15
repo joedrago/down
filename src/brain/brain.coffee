@@ -20,7 +20,7 @@ class Brain
       @interpFrames.push animFrame
       i--
 
-    cc.game.setTurnFrames(frames.length)
+    cc.modes.game.setTurnFrames(frames.length)
 
     # Immediately move, only pretend to animate there over the next frames.length frames
     @x = gx

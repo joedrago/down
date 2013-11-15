@@ -33,8 +33,8 @@ cocos2dApp = cc.Application.extend {
         nullScene = new cc.Scene();
         nullScene.init()
         cc.Director.getInstance().replaceScene(nullScene)
-#        cc.game.modes.intro.activate()
-        cc.game.modes.game.activate()
+#        cc.modes.intro.activate()
+        cc.modes.game.activate()
       this)
 
       return true

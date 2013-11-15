@@ -7,10 +7,12 @@ class BatchNode
   addTo: (layer, depth) ->
     layer.addChild @node, depth
 
-  createSprite: (which, x, y) ->
+  createSprite: (which, x, y, z) ->
+    z ?= 0
     sprite = cc.Sprite.createWithTexture(@node.getTexture(), which)
-    @node.addChild sprite
-    return @tilesheet.prepareSprite(sprite, x, y)
+    @node.addChild sprite, z
+    @tilesheet.prepareSprite(sprite, x, y)
+    return sprite
 
 class Tilesheet
   constructor: (data) ->
@@ -19,7 +21,8 @@ class Tilesheet
 
   createSprite: (which, x, y) ->
     sprite = cc.Sprite.create @_resource, which
-    return @prepareSprite(sprite, x, y)
+    @prepareSprite(sprite, x, y)
+    return sprite
 
   prepareSprite: (sprite, x, y) ->
     sprite.setAnchorPoint(cc.p(0, 0))
