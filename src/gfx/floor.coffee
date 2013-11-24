@@ -28,10 +28,14 @@ class Floor
   release: ->
     @mode.remove @layer
 
-  updateLoc: (loc) ->
+  updateLoc: (loc, isEdge) ->
     opacity = 255
     opacity = 192 if loc.discovered
-    opacity = 0 if loc.visible
+    if loc.visible
+      if isEdge
+        opacity = 64
+      else
+        opacity = 0
     loc.fogSprite.setOpacity(opacity)
 
   debugPath: (path) ->
