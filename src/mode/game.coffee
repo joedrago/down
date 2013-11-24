@@ -62,6 +62,13 @@ class GameMode extends Mode
     @gfx.player.sprite = @state.player.createSprite()
     @gfx.floor.layer.addChild @gfx.player.sprite, config.zOrder.player
 
+  gfxResetUI: ->
+    @gfx.uiBackground = resources.tilesheets.tiles0.createSprite(resources.tilesheets.tiles0.red)
+    @gfx.uiBackground.setOpacity(16)
+    @gfx.uiBackground.setScale(cc.uiWidth / cc.unitSize, cc.height / cc.unitSize)
+    @gfx.uiBackground.setPosition(cc.uiX, cc.uiY)
+    @add @gfx.uiBackground
+
   onDrag: (dx, dy) ->
     @gfx.floor.adjustPosition(dx, dy)
 
@@ -73,6 +80,7 @@ class GameMode extends Mode
   onActivate: ->
     @newGame()
     @gfxResetFloor()
+    @gfxResetUI()
     @updateVisibility()
     cc.Director.getInstance().getScheduler().scheduleCallbackForTarget(this, @update, 1 / 60.0, cc.REPEAT_FOREVER, 0, false)
 
