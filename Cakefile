@@ -60,7 +60,7 @@ bundleFile = gameDir + 'down.js'
 # TODO: choose a size based on the incoming sprites
 tilesheetWidth = 256
 tilesheetHeight = 128
-tilePadding = 1
+tilePadding = 0
 
 coffeeFileRegex = /\.coffee$/
 pngBasenameRegex = /([^\\\/]+)\.png$/

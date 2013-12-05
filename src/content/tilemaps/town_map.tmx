@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="40" height="32" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="town" tilewidth="32" tileheight="32">
+  <image source="../../../game/res/gen/town.png" width="256" height="128"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="40" height="32">
+  <data encoding="base64" compression="zlib">
+   eJzdl9sOhDAIRKvu/3/zZt8awmWG0kr2YRIbiRxHWvAaY1yOPsXycmXVna+KcRdbBd9OthXGHRyPIpZPewYilM9ao56huby8GT6EswOfxcjmOsmXySXrnYmX15a0fcrUfsbrn24wDjlHTvLdCWXZM7lkvrf8i3xl+oVXiyxfVNv3xDN7iva0Cj5vHfGxXq7yaXU6f1/Nu50zC+LfKUX+o/WB7Gn0PK2uX+095KzA9COET3smcjZIRismuzcivx4gbp5nGf+78rGM/8IXrdF5taK/efVs3dNm6tXeUa2T/7+rjF1ZZV/uxGmxdOBE8kcxX3aACGo=
+  </data>
+ </layer>
+</map>
