@@ -10,6 +10,7 @@
     "node-watch": "*",
     "png-js": "*",
     "pngjs": "*",
-    "async": "*"
+    "async": "*",
+    "node-static": "*"
   }
 }

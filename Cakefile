@@ -253,6 +253,20 @@ buildEverything = (cb) ->
 task 'build', 'build game', (options) ->
   buildEverything()
 
+option '-p', '--port [PORT]', 'Dev server port'
+
+task 'server', 'dev server', (options) ->
+  options.port ?= 9000
+  util.log "Starting dev server on port #{options.port}..."
+
+  nodeStatic = require 'node-static'
+  file = new nodeStatic.Server '.'
+  require('http').createServer (request, response) ->
+    request.addListener 'end', ->
+      file.serve(request, response);
+    .resume()
+  .listen options.port
+
 task 'watch', 'Watch prod source files and build changes', ->
   buildEverything ->
     util.log "Watching for changes in src"
