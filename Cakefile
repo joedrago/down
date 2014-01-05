@@ -63,7 +63,7 @@ bundleFile = gameDir + 'down.js'
 # TODO: choose a size based on the incoming sprites
 tilesheetWidth = 256
 tilesheetHeight = 128
-tilePadding = 1
+# tilePadding = 1
 
 coffeeFileRegex = /\.coffee$/
 pngBasenameRegex = /([^\\\/]+)\.png$/
@@ -98,13 +98,13 @@ readpng = (filename, cb) ->
   png.decode (pixels) ->
     return cb(null, { name: basename, filename: filename, png: png, pixels: pixels })
 
-generateTilesheet = (tilesheetName, cb) ->
+generatePaddedTilesheet = (tilesheetName, outputSuffix, tilePadding, genMetrics, cb) ->
   try
     fs.mkdirSync "game/res/gen", '0777'
   catch e
     # derp
-  metricsFilename = "#{srcDir}art/tiles/#{tilesheetName}.coffee"
-  pngFilename = "game/res/gen/#{tilesheetName}.png"
+  metricsFilename = "#{srcDir}art/tiles/#{tilesheetName}#{outputSuffix}.coffee"
+  pngFilename = "game/res/gen/#{tilesheetName}#{outputSuffix}.png"
   tiles = fs.readdirSync srcDir + 'art/tiles/' + tilesheetName
   tiles.sort()
   filenames = ("#{srcDir}art/tiles/#{tilesheetName}/#{t}" for t in tiles)
@@ -210,40 +210,46 @@ generateTilesheet = (tilesheetName, cb) ->
           srcIndex += 4
       x += r.png.width + (tilePadding * 2)
 
-    # generate metrics
-    metrics = "module.exports =\n"
-    metrics += "  # resource\n"
-    metrics += "  _resource: 'res/gen/#{tilesheetName}.png'\n"
-    metrics += "\n  # tiles by name\n"
-    metricsArrays = {}
-    for r in results
-      metrics += "  #{r.name}: cc.rect(#{r.x},#{r.y},#{r.png.width},#{r.png.height})\n"
-      numberMatch = trailingNumberRegex.exec(r.name)
-      if numberMatch
-        name = numberMatch[1]
-        number = parseInt(numberMatch[2])
-        if not metricsArrays[name]?
-          metricsArrays[name] = []
-        metricsArrays[name].push({ r: r, number: number })
 
-    metrics += "\n  # tiles by array\n"
-    for name,metricsArray of metricsArrays
-      metricsArray.sort (a, b) ->
-        return a.number - b.number
-      metrics += "  #{name}: [\n"
-      for e in metricsArray
-        metrics += "    cc.rect(#{e.r.x},#{e.r.y},#{e.r.png.width},#{e.r.png.height}) # #{e.r.name}\n"
-      metrics += "  ]\n"
-      metrics += "  random_#{name}: -> this.#{name}[Math.floor(Math.random()*this.#{name}.length)]\n"
+    if genMetrics
+      # generate metrics
+      metrics = "module.exports =\n"
+      metrics += "  # resource\n"
+      metrics += "  _resource: 'res/gen/#{tilesheetName}.png'\n"
+      metrics += "\n  # tiles by name\n"
+      metricsArrays = {}
+      for r in results
+        metrics += "  #{r.name}: cc.rect(#{r.x},#{r.y},#{r.png.width},#{r.png.height})\n"
+        numberMatch = trailingNumberRegex.exec(r.name)
+        if numberMatch
+          name = numberMatch[1]
+          number = parseInt(numberMatch[2])
+          if not metricsArrays[name]?
+            metricsArrays[name] = []
+          metricsArrays[name].push({ r: r, number: number })
 
-    fs.writeFileSync(metricsFilename, metrics)
-    util.log "Generated #{metricsFilename}"
+      metrics += "\n  # tiles by array\n"
+      for name,metricsArray of metricsArrays
+        metricsArray.sort (a, b) ->
+          return a.number - b.number
+        metrics += "  #{name}: [\n"
+        for e in metricsArray
+          metrics += "    cc.rect(#{e.r.x},#{e.r.y},#{e.r.png.width},#{e.r.png.height}) # #{e.r.name}\n"
+        metrics += "  ]\n"
+        metrics += "  random_#{name}: -> this.#{name}[Math.floor(Math.random()*this.#{name}.length)]\n"
+
+      fs.writeFileSync(metricsFilename, metrics)
+      util.log "Generated #{metricsFilename}"
 
     # write tilesheet png
     png.pack().pipe(fs.createWriteStream(pngFilename))
       .on 'finish', ->
         util.log "Generated #{pngFilename} (#{results.length} tiles)"
         cb() if cb # clue in the caller of generateTilesheet that we're done
+
+generateTilesheet = (tilesheetName, cb) ->
+  generatePaddedTilesheet tilesheetName, "", 1, true, ->
+    generatePaddedTilesheet(tilesheetName, "_unpadded", 0, false, cb)
 
 buildEverything = (cb) ->
   tilesheetNames = fs.readdirSync srcDir + 'art/tiles'
