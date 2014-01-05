@@ -101,6 +101,7 @@ class GameMode extends Mode
         floor.grid = premadeFloor.grid
         floor.entrances = premadeFloor.entrances
         floor.tiles = premadeFloor.tiles
+        floor.bright = premadeFloor.bright
         if not floor.items
           floor.items = premadeFloor.items
         if not floor.npcs
@@ -177,40 +178,40 @@ class GameMode extends Mode
     @gfx.floor.updateLoc(loc, false)
 
   updateVisibility: ->
-    # @clearVisibility()
-    # floor = @currentFloor()
-    # loopCount = 0
-    # sightSquared = @state.player.sight * @state.player.sight
-    # for scaleX in @sightScales
-    #   for scaleY in @sightScales
-    #     for dirX in [-1..1]
-    #       for dirY in [-1..1]
-    #         continue if 0 == dirX == dirY
-    #         i = dirX * scaleX
-    #         j = dirY * scaleY
-    #         x = px = @state.player.x
-    #         y = py = @state.player.y
-    #         # center the cast
-    #         px += 0.5
-    #         py += 0.5
-    #         prevLoc = null
-    #         while floor.grid[x][y].tile?# or floor.grid[x][y].index?
-    #           g = floor.grid[x][y]
-    #           loopCount++
-    #           @markVisible(g)
-    #           if prevLoc != null
-    #             @markBright(prevLoc)
-    #           prevLoc = g
-    #           if (g.wall) or (g.door and (@state.player.x != x or @state.player.y != y))
-    #             @markBright(g)
-    #             break
-    #           px += i
-    #           py += j
-    #           x = Math.floor(px)
-    #           y = Math.floor(py)
-    #           dx = @state.player.x - x
-    #           dy = @state.player.y - y
-    #           break if (dx*dx)+(dy*dy) > sightSquared
+    floor = @currentFloor()
+    @clearVisibility()
+    loopCount = 0
+    sightSquared = @state.player.sight * @state.player.sight
+    for scaleX in @sightScales
+      for scaleY in @sightScales
+        for dirX in [-1..1]
+          for dirY in [-1..1]
+            continue if 0 == dirX == dirY
+            i = dirX * scaleX
+            j = dirY * scaleY
+            x = px = @state.player.x
+            y = py = @state.player.y
+            # center the cast
+            px += 0.5
+            py += 0.5
+            prevLoc = null
+            while floor.grid[x][y].tile or floor.grid[x][y].index?
+              g = floor.grid[x][y]
+              loopCount++
+              @markVisible(g)
+              if prevLoc != null
+                @markBright(prevLoc)
+              prevLoc = g
+              if (g.wall) or (g.door and (@state.player.x != x or @state.player.y != y))
+                @markBright(g)
+                break
+              px += i
+              py += j
+              x = Math.floor(px)
+              y = Math.floor(py)
+              dx = @state.player.x - x
+              dy = @state.player.y - y
+              break if (dx*dx)+(dy*dy) > sightSquared
 
   update: (dt) ->
     @state.player.updateSprite(@gfx.player.sprite)

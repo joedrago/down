@@ -18,6 +18,7 @@ class Floor
     @layer.setAnchorPoint(cc.p(0, 0))
     @floorBatchNode = @tiles.createBatchNode(@floor.width * @floor.height)
     @floorBatchNode.addTo @layer, config.zOrder.floor
+
     @fogBatchNode = @tiles0.createBatchNode(@floor.width * @floor.height)
     @fogBatchNode.addTo @layer, config.zOrder.fog
     for j in [0...floor.height]
@@ -30,7 +31,7 @@ class Floor
           loc.fogSprite = @fogBatchNode.createSprite(@tiles0.black, i * cc.unitSize, j * cc.unitSize)
           @updateLoc(loc)
 
-    @layer.setScale(config.scale.min)
+    @layer.setScale(config.scale.max)
     @mode.add @layer
     # @center()
 
@@ -38,13 +39,16 @@ class Floor
     @mode.remove @layer
 
   updateLoc: (loc, isEdge) ->
-    opacity = 255
-    opacity = 192 if loc.discovered
-    if loc.visible
-      if isEdge
-        opacity = 64
-      else
-        opacity = 0
+    if @floor.bright
+      opacity = 0
+    else
+      opacity = 255
+      opacity = 192 if loc.discovered
+      if loc.visible
+        if isEdge
+          opacity = 64
+        else
+          opacity = 0
     loc.fogSprite.setOpacity(opacity)
 
   debugPath: (path) ->

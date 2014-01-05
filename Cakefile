@@ -265,33 +265,87 @@ generateTilemap = (filename, cb) ->
 
     rawJSON = fs.readFileSync(filename)
     tilemap = JSON.parse(rawJSON)
-    indices = JSON.stringify(tilemap.layers[0].data)
+    collisionLayer = null
+    entrancesLayer = null
+    exitsLayer = null
+    for layer in tilemap.layers
+      if layer.name == "entrances"
+        entrancesLayer = layer
+      if layer.name == "exits"
+        exitsLayer = layer
+      if layer.name == "collision"
+        collisionLayer = layer
+    if not collisionLayer?
+      util.log "WARNING: could not find collision layer for #{name}!"
+
+    entrances = []
+    for entrance in entrancesLayer.objects
+      util.log "found entrance #{entrance.name}"
+      e =
+        name: entrance.name
+        x: Math.floor(entrance.x / tilemap.tilewidth)
+        y: tilemap.height - Math.floor(entrance.y / tilemap.tileheight)
+      entrances.push e
+
+    entranceDeclaration = "    @entrances =\n"
+    for e in entrances
+      entranceDeclaration += "      #{e.name}:\n"
+      entranceDeclaration += "        x: #{e.x}\n"
+      entranceDeclaration += "        y: #{e.y}\n"
+
+    exits = []
+    for exit in exitsLayer.objects
+      util.log "found exit #{exit.name} (to floor: #{exit.properties.floor})"
+      e =
+        x: Math.floor(exit.x / tilemap.tilewidth)
+        y: tilemap.height - Math.floor(exit.y / tilemap.tileheight)
+        floor: exit.properties.floor
+        entrance: exit.properties.entrance
+      exits.push e
+
+    exitDeclaration = "    # configure exits\n"
+    for e in exits
+      exitDeclaration += "    @grid[#{e.x}][#{e.y}].exit =\n"
+      exitDeclaration += "      floor: \"#{e.floor}\"\n"
+      exitDeclaration += "      entrance: \"#{e.entrance}\"\n"
+
+    artIndices = JSON.stringify(tilemap.layers[0].data)
+    collisionIndices = JSON.stringify(collisionLayer.data)
+
+    bright = ""
+    if tilemap.properties.bright
+      bright = "@bright = true"
 
     outputFilename = srcDir + "content/floors/#{name}.coffee"
     fs.writeFileSync outputFilename, """
-    indices = #{indices}
+    artIndices = #{artIndices}
+    collisionIndices = #{collisionIndices}
 
     class GeneratedTilemap
       constructor: ->
         @tiles = "#{name}"
         @width = #{tilemap.width}
         @height = #{tilemap.height}
+        #{bright}
 
-        @entrances =
-          start:
-            x: 1
-            y: 1
+    #{entranceDeclaration}
 
-        index = 0
         @grid = []
         for i in [0...@width]
           @grid[i] = []
           for j in [0...@height]
+            index = i + ((@height-1 - j) * @width)
             @grid[i][j] =
               x: i
               y: j
-              discovered: true
-              index: indices[i + ((@height-1 - j) * @width)] - 1
+              index: artIndices[index] - 1
+            coll = collisionIndices[index] - 1
+            if coll == 1 # wall
+              @grid[i][j].wall = true
+            if coll == 2 # door
+              @grid[i][j].door = true
+
+    #{exitDeclaration}
 
         @items = []
         @npcs = []
