@@ -216,6 +216,10 @@ generatePaddedTilesheet = (tilesheetName, outputSuffix, tilePadding, genMetrics,
       metrics = "module.exports =\n"
       metrics += "  # resource\n"
       metrics += "  _resource: 'res/gen/#{tilesheetName}.png'\n"
+      metrics += "\n  # tiles by index\n  _list: [\n"
+      for r in results
+        metrics += "    cc.rect(#{r.x},#{r.y},#{r.png.width},#{r.png.height})\n"
+      metrics += "  ]\n"
       metrics += "\n  # tiles by name\n"
       metricsArrays = {}
       for r in results
