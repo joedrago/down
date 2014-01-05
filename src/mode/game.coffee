@@ -38,7 +38,7 @@ class GameMode extends Mode
     for i in [0...depth]
       if i == 0
         upInfo =
-          floor: "overworld"
+          floor: "town"
       else
         upInfo =
           floor: "#{name}#{i-1}"
@@ -54,9 +54,9 @@ class GameMode extends Mode
 
   newSave: ->
     savedata =
-      # if floor is absent, it will be set to "overworld", and player will be teleported
+      # if floor is absent, it will be set to "town", and player will be teleported
       floors:
-        overworld:
+        town:
           premade: true
         catacombs:
           premade: true
@@ -93,11 +93,14 @@ class GameMode extends Mode
 
     for floorName, floor of savedata.floors
       if floor.premade
-        premadeFloor = require("art/floors/#{floorName}")()
+        premadeFloor = require("content/floors/#{floorName}")()
+        cc.log "premadeFloor #{floorName}: "
+        cc.log premadeFloor
         floor.width = premadeFloor.width
         floor.height = premadeFloor.height
         floor.grid = premadeFloor.grid
         floor.entrances = premadeFloor.entrances
+        floor.tiles = premadeFloor.tiles
         if not floor.items
           floor.items = premadeFloor.items
         if not floor.npcs
@@ -105,7 +108,7 @@ class GameMode extends Mode
       @state.floors[floorName] = floor
 
     if not @state.floor
-      @state.floor = "overworld"
+      @state.floor = "town"
       startingPos = @currentFloor().entrances["start"]
       @state.player.x = startingPos.x
       @state.player.y = startingPos.y
@@ -174,40 +177,40 @@ class GameMode extends Mode
     @gfx.floor.updateLoc(loc, false)
 
   updateVisibility: ->
-    @clearVisibility()
-    floor = @currentFloor()
-    loopCount = 0
-    sightSquared = @state.player.sight * @state.player.sight
-    for scaleX in @sightScales
-      for scaleY in @sightScales
-        for dirX in [-1..1]
-          for dirY in [-1..1]
-            continue if 0 == dirX == dirY
-            i = dirX * scaleX
-            j = dirY * scaleY
-            x = px = @state.player.x
-            y = py = @state.player.y
-            # center the cast
-            px += 0.5
-            py += 0.5
-            prevLoc = null
-            while floor.grid[x][y].tile?
-              g = floor.grid[x][y]
-              loopCount++
-              @markVisible(g)
-              if prevLoc != null
-                @markBright(prevLoc)
-              prevLoc = g
-              if (g.wall) or (g.door and (@state.player.x != x or @state.player.y != y))
-                @markBright(g)
-                break
-              px += i
-              py += j
-              x = Math.floor(px)
-              y = Math.floor(py)
-              dx = @state.player.x - x
-              dy = @state.player.y - y
-              break if (dx*dx)+(dy*dy) > sightSquared
+    # @clearVisibility()
+    # floor = @currentFloor()
+    # loopCount = 0
+    # sightSquared = @state.player.sight * @state.player.sight
+    # for scaleX in @sightScales
+    #   for scaleY in @sightScales
+    #     for dirX in [-1..1]
+    #       for dirY in [-1..1]
+    #         continue if 0 == dirX == dirY
+    #         i = dirX * scaleX
+    #         j = dirY * scaleY
+    #         x = px = @state.player.x
+    #         y = py = @state.player.y
+    #         # center the cast
+    #         px += 0.5
+    #         py += 0.5
+    #         prevLoc = null
+    #         while floor.grid[x][y].tile?# or floor.grid[x][y].index?
+    #           g = floor.grid[x][y]
+    #           loopCount++
+    #           @markVisible(g)
+    #           if prevLoc != null
+    #             @markBright(prevLoc)
+    #           prevLoc = g
+    #           if (g.wall) or (g.door and (@state.player.x != x or @state.player.y != y))
+    #             @markBright(g)
+    #             break
+    #           px += i
+    #           py += j
+    #           x = Math.floor(px)
+    #           y = Math.floor(py)
+    #           dx = @state.player.x - x
+    #           dy = @state.player.y - y
+    #           break if (dx*dx)+(dy*dy) > sightSquared
 
   update: (dt) ->
     @state.player.updateSprite(@gfx.player.sprite)

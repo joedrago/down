@@ -6,6 +6,7 @@ images =
 tilesheets =
   tiles0: new Tilesheet(require('art/tiles/tiles0'))
   player: new Tilesheet(require('art/tiles/player'))
+  town: new Tilesheet(require('art/tiles/town'))
 
 cocosPreloadList = ({src: v} for k, v of images)
 for tilesheetName, tilesheet of tilesheets

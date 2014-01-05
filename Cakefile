@@ -5,9 +5,10 @@
 modules = [
   'art/tiles/tiles0'
   'art/tiles/player'
+  'art/tiles/town'
 
-  'art/floors/overworld'
-  'art/floors/catacombs'
+  'content/floors/town'
+  'content/floors/catacombs'
 
   'base/mode'
 
@@ -69,7 +70,7 @@ coffeeFileRegex = /\.coffee$/
 pngBasenameRegex = /([^\\\/]+)\.png$/
 trailingNumberRegex = /(.*[^\d])(\d+)$/
 tilesFileRegex = /[\\\/]tiles[\\\/]([^\\\/]+)[\\\/][A-Za-z0-9_]+\.png$/
-tilemapFileRegex = /[\\\/]content[\\\/]tilemaps[\\\/]([A-Za-z0-9_]+)\.json$/
+tilemapFileRegex = /[\\\/]content[\\\/]floors[\\\/]([A-Za-z0-9_]+)\.json$/
 
 generateJSBundle = (cb) ->
   b = browserify {
@@ -257,15 +258,53 @@ generateTilesheet = (tilesheetName, cb) ->
     generatePaddedTilesheet(tilesheetName, "_unpadded", 0, false, cb)
 
 generateTilemap = (filename, cb) ->
-  filename = srcDir + "content/tilemaps/#{filename}"
+  filename = srcDir + "content/floors/#{filename}"
   results = tilemapFileRegex.exec(filename)
   if results
     name = results[1]
-    util.log "Generated tilemap #{name}."
+
+    rawJSON = fs.readFileSync(filename)
+    tilemap = JSON.parse(rawJSON)
+    indices = JSON.stringify(tilemap.layers[0].data)
+
+    outputFilename = srcDir + "content/floors/#{name}.coffee"
+    fs.writeFileSync outputFilename, """
+    indices = #{indices}
+
+    class GeneratedTilemap
+      constructor: ->
+        @tiles = "#{name}"
+        @width = #{tilemap.width}
+        @height = #{tilemap.height}
+
+        @entrances =
+          start:
+            x: 1
+            y: 1
+
+        index = 0
+        @grid = []
+        for i in [0...@width]
+          @grid[i] = []
+          for j in [0...@height]
+            @grid[i][j] =
+              x: i
+              y: j
+              discovered: true
+              index: indices[i + ((@height-1 - j) * @width)] - 1
+
+        @items = []
+        @npcs = []
+
+    module.exports = ->
+      return new GeneratedTilemap()
+
+    """
+    util.log "Generated tilemap #{name} (#{outputFilename})"
   cb() if cb
 
 buildEverything = (cb) ->
-  tilemapNames = fs.readdirSync srcDir + 'content/tilemaps'
+  tilemapNames = fs.readdirSync srcDir + 'content/floors'
   tilemapNames = tilemapNames.filter (name) -> !coffeeFileRegex.test(name)
   async.map tilemapNames, generateTilemap, (err) ->
     tilesheetNames = fs.readdirSync srcDir + 'art/tiles'

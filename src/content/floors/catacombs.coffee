@@ -28,11 +28,11 @@ class FakeCatacombs
 
     @grid[5][5].tile = "door"
     @grid[5][5].exit =
-      floor: "overworld"
+      floor: "town"
       entrance: "catacombs"
 
     @entrances =
-      overworld:
+      town:
         x: 6
         y: 5
 

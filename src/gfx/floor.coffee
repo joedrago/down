@@ -4,23 +4,30 @@ resources = require 'resources'
 
 class Floor
   constructor: (@mode, @floor) ->
-    @tiles = resources.tilesheets.tiles0
+    cc.log "generating floor:"
+    cc.log @floor
+    if @floor.tiles?
+      cc.log "using tilesheet #{@floor.tiles}"
+      @tiles = resources.tilesheets[@floor.tiles]
+    else
+      @tiles = resources.tilesheets.tiles0
+
+    @tiles0 = resources.tilesheets.tiles0 # always need tiles0 for black
 
     @layer = new cc.Layer()
     @layer.setAnchorPoint(cc.p(0, 0))
     @floorBatchNode = @tiles.createBatchNode(@floor.width * @floor.height)
     @floorBatchNode.addTo @layer, config.zOrder.floor
-    @fogBatchNode = @tiles.createBatchNode(@floor.width * @floor.height)
+    @fogBatchNode = @tiles0.createBatchNode(@floor.width * @floor.height)
     @fogBatchNode.addTo @layer, config.zOrder.fog
     for j in [0...floor.height]
       for i in [0...floor.width]
         tile = floor.grid[i][j].tile
-        if tile?
+        index = floor.grid[i][j].index
+        if tile? or index?
           loc = floor.grid[i][j]
-          # loc.discovered = true # TEMP
-          # loc.visible = true    # TEMP
-          @floorBatchNode.createSprite(@getTile(@tiles, tile), i * cc.unitSize, j * cc.unitSize)
-          loc.fogSprite = @fogBatchNode.createSprite(@tiles.black, i * cc.unitSize, j * cc.unitSize)
+          @floorBatchNode.createSprite(@getTile(@tiles, tile, index), i * cc.unitSize, j * cc.unitSize)
+          loc.fogSprite = @fogBatchNode.createSprite(@tiles0.black, i * cc.unitSize, j * cc.unitSize)
           @updateLoc(loc)
 
     @layer.setScale(config.scale.min)
@@ -50,13 +57,15 @@ class Floor
       sprite = @pathBatchNode.createSprite(@tiles.door, p.x * cc.unitSize, p.y * cc.unitSize)
       sprite.setOpacity(64)
 
-  getTile: (tiles, tile) ->
+  getTile: (tiles, tile, index) ->
+    if index?
+      return tiles._list[index]
     switch
-      when tile == "wall"  then tiles.random_wall()
-      when tile == "door"  then tiles.door
-      when tile == "up"    then tiles.stairsup
-      when tile == "down"  then tiles.stairsdown
-      when tile >= "floor" then tiles.random_floor()
+      when tile == "wall"  then return tiles.random_wall()
+      when tile == "door"  then return tiles.door
+      when tile == "up"    then return tiles.stairsup
+      when tile == "down"  then return tiles.stairsdown
+      when tile >= "floor" then return tiles.random_floor()
       else 0
 
   rectForGridValue: (tiles, v) ->
