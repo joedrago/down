@@ -60,7 +60,7 @@ bundleFile = gameDir + 'down.js'
 # TODO: choose a size based on the incoming sprites
 tilesheetWidth = 256
 tilesheetHeight = 128
-tilePadding = 0
+tilePadding = 1
 
 coffeeFileRegex = /\.coffee$/
 pngBasenameRegex = /([^\\\/]+)\.png$/
@@ -255,21 +255,20 @@ task 'build', 'build game', (options) ->
 
 option '-p', '--port [PORT]', 'Dev server port'
 
-task 'server', 'dev server', (options) ->
-  options.port ?= 9000
-  util.log "Starting dev server on port #{options.port}..."
-
-  nodeStatic = require 'node-static'
-  file = new nodeStatic.Server '.'
-  require('http').createServer (request, response) ->
-    request.addListener 'end', ->
-      file.serve(request, response);
-    .resume()
-  .listen options.port
-
-task 'watch', 'Watch prod source files and build changes', ->
+task 'watch', 'Run dev server and watch for changed source files to automatically rebuild', (options) ->
   buildEverything ->
     util.log "Watching for changes in src"
+
+    options.port ?= 9000
+    util.log "Starting dev server on port #{options.port}..."
+
+    nodeStatic = require 'node-static'
+    file = new nodeStatic.Server '.'
+    require('http').createServer (request, response) ->
+      request.addListener 'end', ->
+        file.serve(request, response);
+      .resume()
+    .listen options.port
 
     watch 'src', (filename) ->
       if coffeeFileRegex.test(filename)
