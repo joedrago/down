@@ -6,6 +6,9 @@ modules = [
   'art/tiles/tiles0'
   'art/tiles/player'
 
+  'art/floors/overworld'
+  'art/floors/catacombs'
+
   'base/mode'
 
   'boot/mainweb'

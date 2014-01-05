@@ -50,12 +50,22 @@ WALL = 1
 DOOR = 2
 FIRST_ROOM_ID = 5
 
-valueToColor = (p, v) ->
-  switch
-    when v == WALL then return p.color 32, 32, 32
-    when v == DOOR then return p.color 128, 128, 128
-    when v >= FIRST_ROOM_ID then return p.color 0, 0, 5 + Math.min(240, 15 + (v * 2))
-  return p.color 0, 0, 0
+
+shuffle = (array) ->
+  currentIndex = array.length
+
+  # While there remain elements to shuffle...
+  while (0 != currentIndex)
+    # Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex)
+    currentIndex -= 1
+
+    # And swap it with the current element.
+    temporaryValue = array[currentIndex]
+    array[currentIndex] = array[randomIndex]
+    array[randomIndex] = temporaryValue
+
+  return array;
 
 class Rect
   constructor: (@l, @t, @r, @b) ->
@@ -247,13 +257,11 @@ class Map
           type: EMPTY
           x: i
           y: j
-          visible: false
-          discovered: false
     @bbox = new Rect 0, 0, 0, 0
     @rooms = []
 
   randReset: ->
-    @rng = seedRandom(@seed)
+    @rng = seedRandom() #(@seed)
 
   rand: (v) ->
     return Math.floor(@rng() * v)
@@ -304,9 +312,67 @@ class Map
       while not added
         added = @generateRoom roomid
 
-generate = ->
+  convert: (name, upInfo, downInfo) ->
+    possibleEntrances = {}
+    for i in [0...@width]
+      prevID = -1
+      prevJ = -1
+      for j in [0...@height]
+        g = @grid[i][j]
+        if g.type == WALL
+          g.tile = "wall"
+          g.wall = true
+        else if g.type == DOOR
+          g.tile = "door"
+          g.door = true
+        else if g.type >= FIRST_ROOM_ID
+          if (prevID != -1) and  (prevID == g.type) and (j - prevJ == 1)
+            # found a good spot for a door
+            if !possibleEntrances[prevID] or (@rand(20) == 0)
+              possibleEntrances[prevID] =
+                x: i
+                y: prevJ
+          g.tile = "floor"
+          prevID = g.type
+          prevJ = j
+        delete g["type"]
+        # g.discovered = true # uncommenting this line makes the whole floor discovered
+    delete this["rooms"]
+    delete this["seed"]
+    delete this["rng"]
+
+    possibleEntrancesArray = []
+    for id, pos of possibleEntrances
+      possibleEntrancesArray.push(pos)
+    possibleEntrancesArray = shuffle(possibleEntrancesArray)
+
+    up = possibleEntrancesArray[0]
+    down = possibleEntrancesArray[1]
+
+    @grid[up.x][up.y].tile = "up"
+    @grid[up.x][up.y].exit =
+      floor: upInfo.floor
+      entrance: name
+
+    if downInfo?
+      @grid[down.x][down.y].tile = "down"
+      @grid[down.x][down.y].exit =
+        floor: downInfo.floor
+        entrance: name
+
+    @entrances = {}
+    @entrances[upInfo.floor] =
+      x: up.x
+      y: up.y+1
+    if downInfo?
+      @entrances[downInfo.floor] =
+        x: down.x
+        y: down.y+1
+
+generate = (name, upInfo, downInfo) ->
   map = new Map 80, 80, 10
   map.generateRooms(20)
+  map.convert(name, upInfo, downInfo)
   return map
 
 module.exports =

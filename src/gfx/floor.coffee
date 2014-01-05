@@ -14,16 +14,18 @@ class Floor
     @fogBatchNode.addTo @layer, config.zOrder.fog
     for j in [0...floor.height]
       for i in [0...floor.width]
-        v = floor.get(i, j)
-        if v != 0
+        tile = floor.grid[i][j].tile
+        if tile?
           loc = floor.grid[i][j]
-          @floorBatchNode.createSprite(@rectForGridValue(@tiles, v), i * cc.unitSize, j * cc.unitSize)
+          # loc.discovered = true # TEMP
+          # loc.visible = true    # TEMP
+          @floorBatchNode.createSprite(@getTile(@tiles, tile), i * cc.unitSize, j * cc.unitSize)
           loc.fogSprite = @fogBatchNode.createSprite(@tiles.black, i * cc.unitSize, j * cc.unitSize)
           @updateLoc(loc)
 
     @layer.setScale(config.scale.min)
     @mode.add @layer
-    @center()
+    # @center()
 
   release: ->
     @mode.remove @layer
@@ -48,6 +50,15 @@ class Floor
       sprite = @pathBatchNode.createSprite(@tiles.door, p.x * cc.unitSize, p.y * cc.unitSize)
       sprite.setOpacity(64)
 
+  getTile: (tiles, tile) ->
+    switch
+      when tile == "wall"  then tiles.random_wall()
+      when tile == "door"  then tiles.door
+      when tile == "up"    then tiles.stairsup
+      when tile == "down"  then tiles.stairsdown
+      when tile >= "floor" then tiles.random_floor()
+      else 0
+
   rectForGridValue: (tiles, v) ->
     switch
       when v == floorgen.WALL then tiles.random_wall()
@@ -61,9 +72,9 @@ class Floor
     y = screenY - (mapY * scale)
     @layer.setPosition(x, y)
 
-  center: ->
-    center = @floor.bbox.center()
-    @place(center.x * cc.unitSize, center.y * cc.unitSize, cc.width / 2, cc.height / 2)
+  # center: ->
+  #   center = @floor.bbox.center()
+  #   @place(center.x * cc.unitSize, center.y * cc.unitSize, cc.width / 2, cc.height / 2)
 
   screenToMapCoords: (x, y) ->
     pos = @layer.getPosition()

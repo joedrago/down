@@ -15,6 +15,10 @@ class Player extends Brain
     cc.modes.game.updateVisibility()
     if @takeStep()
       @cd = 50
+    else
+      loc = cc.modes.game.currentCell(@x, @y)
+      if loc.exit?
+        cc.modes.game.switchFloor(loc.exit)
 
   act: (gx, gy) ->
     pathfinder = new Pathfinder(cc.modes.game.currentFloor(), 0)

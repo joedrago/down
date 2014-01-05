@@ -29,30 +29,94 @@ class GameMode extends Mode
     floorgen.generate()
 
   currentFloor: ->
-    return @state.floors[@state.player.floor]
+    return @state.floors[@state.floor]
 
-  newGame: ->
-    cc.log "newGame"
-    @state = {
-      running: false
-      player: new Player({
+  currentCell: (x, y) ->
+    return @state.floors[@state.floor].grid[x][y]
+
+  generateFloors: (savedata, name, depth) ->
+    for i in [0...depth]
+      if i == 0
+        upInfo =
+          floor: "overworld"
+      else
+        upInfo =
+          floor: "#{name}#{i-1}"
+
+      if i == (depth - 1)
+        downInfo = null
+      else
+        downInfo =
+          floor: "#{name}#{i+1}"
+
+      floorName = "#{name}#{i}"
+      savedata.floors[floorName] = floorgen.generate(floorName, upInfo, downInfo)
+
+  newSave: ->
+    savedata =
+      # if floor is absent, it will be set to "overworld", and player will be teleported
+      floors:
+        overworld:
+          premade: true
+        catacombs:
+          premade: true
+          # if items and npcs are absent, they'll be populated from the premade list
+      player:
+        # if player x,y are absent, they'll be populated from the map
         sight: 3.5
-        x: 44
-        y: 49
-        floor: 1
-      })
-      floors: [
-        {}
-        @newFloor()
-      ]
-    }
-    @visibleLocs = []
+
+    @generateFloors(savedata, "dungeon", 3)
+
+    return savedata
+
+  enterFloor: ->
+    @gfxReset()
+    @updateVisibility()
+    @gfx.floor.place(@state.player.x * cc.unitSize, @state.player.y * cc.unitSize, cc.width / 2, cc.height / 2)
+    # TODO: do fade in?
+
+  switchFloor: (exit) ->
+    cc.log "switchFloor: #{exit.floor}"
+    @state.floor = exit.floor
+    pos = @currentFloor().entrances[exit.entrance]
+    @state.player.x = pos.x
+    @state.player.y = pos.y
+
+    @enterFloor()
+
+  load: (savedata) ->
+    @state =
+      floor: savedata.floor
+      floors: {}
+      player: new Player(savedata.player)
+      running: false
+
+    for floorName, floor of savedata.floors
+      if floor.premade
+        premadeFloor = require("art/floors/#{floorName}")()
+        floor.width = premadeFloor.width
+        floor.height = premadeFloor.height
+        floor.grid = premadeFloor.grid
+        floor.entrances = premadeFloor.entrances
+        if not floor.items
+          floor.items = premadeFloor.items
+        if not floor.npcs
+          floor.npcs = premadeFloor.npcs
+      @state.floors[floorName] = floor
+
+    if not @state.floor
+      @state.floor = "overworld"
+      startingPos = @currentFloor().entrances["start"]
+      @state.player.x = startingPos.x
+      @state.player.y = startingPos.y
+
+    @enterFloor()
 
   setTurnFrames: (count) ->
     if @turnFrames < count
       @turnFrames = count
 
-  gfxResetFloor: ->
+  gfxReset: ->
     if @gfx?.floor?
       @gfx.floor.release()
     @gfx = {}
@@ -62,12 +126,11 @@ class GameMode extends Mode
     @gfx.player.sprite = @state.player.createSprite()
     @gfx.floor.layer.addChild @gfx.player.sprite, config.zOrder.player
 
-  gfxResetUI: ->
-    @gfx.uiBackground = resources.tilesheets.tiles0.createSprite(resources.tilesheets.tiles0.red)
-    @gfx.uiBackground.setOpacity(16)
-    @gfx.uiBackground.setScale(cc.uiWidth / cc.unitSize, cc.height / cc.unitSize)
-    @gfx.uiBackground.setPosition(cc.uiX, cc.uiY)
-    @add @gfx.uiBackground
+    # @gfx.uiBackground = resources.tilesheets.tiles0.createSprite(resources.tilesheets.tiles0.red)
+    # @gfx.uiBackground.setOpacity(16)
+    # @gfx.uiBackground.setScale(cc.uiWidth / cc.unitSize, cc.height / cc.unitSize)
+    # @gfx.uiBackground.setPosition(cc.uiX, cc.uiY)
+    # @add @gfx.uiBackground
 
   onDrag: (dx, dy) ->
     @gfx.floor.adjustPosition(dx, dy)
@@ -78,9 +141,8 @@ class GameMode extends Mode
     @gfx.floor.place(pos.x, pos.y, x, y)
 
   onActivate: ->
-    @newGame()
-    @gfxResetFloor()
-    @gfxResetUI()
+    cc.log "hi"
+    @load(@newSave())
     @updateVisibility()
     cc.Director.getInstance().getScheduler().scheduleCallbackForTarget(this, @update, 1 / 60.0, cc.REPEAT_FOREVER, 0, false)
 
@@ -94,14 +156,11 @@ class GameMode extends Mode
       @state.running = true
       cc.log "running"
 
-    # pathfinder = new Pathfinder(@currentFloor(), 0)
-    # path = pathfinder.calc(@state.player.x, @state.player.y, gridX, gridY)
-    # @gfx.floor.debugPath(path)
-
   clearVisibility: ->
-    for loc in @visibleLocs
-      loc.visible = false
-      @gfx.floor.updateLoc(loc, false)
+    if @visibleLocs?
+      for loc in @visibleLocs
+        loc.visible = false
+        @gfx.floor.updateLoc(loc, false)
     @visibleLocs = []
 
   markVisible: (loc) ->
@@ -132,14 +191,14 @@ class GameMode extends Mode
             px += 0.5
             py += 0.5
             prevLoc = null
-            while (v = floor.get(x, y)) > 0
+            while floor.grid[x][y].tile?
               g = floor.grid[x][y]
               loopCount++
               @markVisible(g)
               if prevLoc != null
                 @markBright(prevLoc)
               prevLoc = g
-              if (v == floorgen.WALL) or (v == floorgen.DOOR and (@state.player.x != x or @state.player.y != y))
+              if (g.wall) or (g.door and (@state.player.x != x or @state.player.y != y))
                 @markBright(g)
                 break
               px += i
@@ -149,7 +208,6 @@ class GameMode extends Mode
               dx = @state.player.x - x
               dy = @state.player.y - y
               break if (dx*dx)+(dy*dy) > sightSquared
-    #cc.log "updateVisibility looped #{loopCount} times"
 
   update: (dt) ->
     @state.player.updateSprite(@gfx.player.sprite)

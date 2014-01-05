@@ -61,7 +61,7 @@ class Dijkstra
       neighbors = @neighbors(grid, currentNode)
 
       for neighbor in neighbors
-        if neighbor.visited or (neighbor.type == floorgen.WALL)
+        if (neighbor.visited) or (neighbor.wall)
           # Not a valid node to process, skip to next neighbor.
           continue
 
