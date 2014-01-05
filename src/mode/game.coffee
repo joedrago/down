@@ -161,18 +161,18 @@ class GameMode extends Mode
       cc.log "running"
 
   clearVisibility: ->
-    if @visibleLocs?
-      for loc in @visibleLocs
+    if @gfx.visibleLocs?
+      for loc in @gfx.visibleLocs
         loc.visible = false
         @gfx.floor.updateLoc(loc, false)
-    @visibleLocs = []
+    @gfx.visibleLocs = []
 
   markVisible: (loc) ->
     return if loc.visible
     loc.visible = true
     loc.discovered = true
     @gfx.floor.updateLoc(loc, true)
-    @visibleLocs.push(loc)
+    @gfx.visibleLocs.push(loc)
 
   markBright: (loc) ->
     @gfx.floor.updateLoc(loc, false)
