@@ -69,6 +69,7 @@ coffeeFileRegex = /\.coffee$/
 pngBasenameRegex = /([^\\\/]+)\.png$/
 trailingNumberRegex = /(.*[^\d])(\d+)$/
 tilesFileRegex = /[\\\/]tiles[\\\/]([^\\\/]+)[\\\/][A-Za-z0-9_]+\.png$/
+tilemapFileRegex = /[\\\/]content[\\\/]tilemaps[\\\/]([A-Za-z0-9_]+)\.json$/
 
 generateJSBundle = (cb) ->
   b = browserify {
@@ -255,13 +256,24 @@ generateTilesheet = (tilesheetName, cb) ->
   generatePaddedTilesheet tilesheetName, "", 1, true, ->
     generatePaddedTilesheet(tilesheetName, "_unpadded", 0, false, cb)
 
+generateTilemap = (filename, cb) ->
+  filename = srcDir + "content/tilemaps/#{filename}"
+  results = tilemapFileRegex.exec(filename)
+  if results
+    name = results[1]
+    util.log "Generated tilemap #{name}."
+  cb() if cb
+
 buildEverything = (cb) ->
-  tilesheetNames = fs.readdirSync srcDir + 'art/tiles'
-  tilesheetNames = tilesheetNames.filter (name) -> !coffeeFileRegex.test(name)
-  async.map tilesheetNames, generateTilesheet, (err) ->
-    generateJSBundle ->
-      util.log "Build complete."
-      cb() if cb
+  tilemapNames = fs.readdirSync srcDir + 'content/tilemaps'
+  tilemapNames = tilemapNames.filter (name) -> !coffeeFileRegex.test(name)
+  async.map tilemapNames, generateTilemap, (err) ->
+    tilesheetNames = fs.readdirSync srcDir + 'art/tiles'
+    tilesheetNames = tilesheetNames.filter (name) -> !coffeeFileRegex.test(name)
+    async.map tilesheetNames, generateTilesheet, (err) ->
+      generateJSBundle ->
+        util.log "Build complete."
+        cb() if cb
 
 task 'build', 'build game', (options) ->
   buildEverything()
@@ -293,3 +305,9 @@ task 'watch', 'Run dev server and watch for changed source files to automaticall
           tilesheetName = results[1]
           util.log "Tile source #{filename} changed, regenerating tilesheet '#{tilesheetName}'..."
           generateTilesheet(tilesheetName)
+        else
+          results = tilemapFileRegex.exec(filename)
+          if results
+            name = results[1]
+            util.log "Tilemap source #{filename} changed, regenerating tilemap '#{name}'..."
+            generateTilemap(filename)
